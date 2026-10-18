@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>محرك التداول الكمي</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--tx:#14181f;--mut:#667085;--bd:#e2e6ed;--g:#0a8f4e;--r:#d1293d;--n:#8a6d00;--ac:#2563eb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1117;--card:#161b22;--tx:#e6edf3;--mut:#8b949e;--bd:#2a313c;--g:#3fb950;--r:#f85149;--n:#d4a72c;--ac:#58a6ff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding:14px;max-width:760px;margin-inline:auto}
+h1{font-size:19px;margin:6px 0 12px}.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 12px}
+button.on,button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+.big{font-size:26px;font-weight:700}.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);font-size:14px}.row:last-child{border:0}
+.b{color:var(--g)}.s{color:var(--r)}.m{color:var(--n)}.mut{color:var(--mut);font-size:12px}
+.bar{height:8px;border-radius:6px;background:var(--bd);overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--ac)}
+.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:7px 6px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}tr.c{cursor:pointer}
+.warn{font-size:12px;color:var(--mut);line-height:1.7}
+</style>
+</head>
+<body>
+<h1>📊 محرك التداول الكمي — 15 مؤشر فعلي</h1>
+<div class="card"><div class="chips" id="chips"></div>
+<input id="key" dir="ltr" placeholder="مفتاح Twelve Data (لأزواج JPY / CHF / CAD)" style="width:100%;margin-top:10px;padding:8px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit">
+<div style="margin-top:10px;display:flex;gap:8px"><button class="pri" id="go">حلّل الأصل</button><button id="all">فحص الكل</button></div></div>
+<div id="out"></div>
+<div class="card warn">المؤشرات تُحسب من شموع حقيقية (5د / 1س / 4س) من Binance، وأزواج JPY/CHF/CAD من Twelve Data (بلا حجم تداول فيُحيَّد MFI). النتائج أدوات مساعدة وليست توصية مالية ولا تضمن الربح؛ التزم دائماً بإدارة رأس المال.</div>
+<script>
+const A={"BTC/USD":"BTCUSDT","ETH/USD":"ETHUSDT","SOL/USD":"SOLUSDT","TRX/USD":"TRXUSDT","EUR/USD":"EURUSDT","GBP/USD":"GBPUSDT","AUD/USD":"AUDUSDT","USD/JPY":"td:USD/JPY","USD/CHF":"td:USD/CHF","USD/CAD":"td:USD/CAD","XAU/USD":"PAXGUSDT"};
+const T={scalp:{n:"سكالبينج",tf:"5m",sl:1.2,tp:[1.5,2.5]},intra:{n:"إنتر داي",tf:"1h",sl:1.5,tp:[2,3.5]},swing:{n:"سوينج",tf:"4h",sl:2,tp:[3,5]}};
+let sel="BTC/USD";const $=id=>document.getElementById(id);
