@@ -1,299 +1,360 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>محرك التداول الذكي وقوة السيولة</title>
-<style>
-:root{--bg:#0d1117;--card:#161b22;--tx:#e6edf3;--mut:#8b949e;--bd:#2a313c;--g:#3fb950;--r:#f85149;--n:#d4a72c;--ac:#58a6ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding:12px;max-width:760px;margin-inline:auto}
-h1{font-size:18px;margin:6px 0 12px;text-align:center}.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
-.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{flex:1;padding:10px;font-weight:bold}
-.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 12px}
-button.on,button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
-.big{font-size:24px;font-weight:700}.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);font-size:14px}.row:last-child{border:0}
-.b{color:var(--g)}.s{color:var(--r)}.m{color:var(--n)}.mut{color:var(--mut);font-size:12px}
-.bar{height:6px;border-radius:6px;background:var(--bd);overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--ac)}
-.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px 6px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}tr.c{cursor:pointer}tr.c:hover{background:rgba(255,255,255,0.03)}
-.warn{font-size:11px;color:var(--mut);line-height:1.6;text-align:center}
-.flex-btns{display:flex;gap:8px;margin-top:10px}
-.flex-btns button{flex:1}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة التداول الذكية - استراتيجية ORB</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #2ea043;
+            --accent-red: #da3633;
+            --accent-yellow: #d29922;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .symbols-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .symbol-btn {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .symbol-btn:hover, .symbol-btn.active {
+            background-color: var(--accent-blue);
+            color: #fff;
+            border-color: var(--accent-blue);
+        }
+        .dashboard-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .main-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .price-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .status-wait { background-color: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+        .status-buy { background-color: rgba(46, 160, 67, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .status-sell { background-color: rgba(218, 54, 51, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        .status-closed { background-color: rgba(139, 148, 158, 0.2); color: var(--text-secondary); border: 1px solid var(--text-secondary); }
+        
+        .grid-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .detail-item {
+            background: rgba(255,255,255,0.02);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .detail-title {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .market-status-banner {
+            text-align: center;
+            padding: 10px;
+            background: rgba(218, 54, 51, 0.1);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: none;
+        }
+        .loader {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+    </style>
 </head>
 <body>
-<h1>📊 منصة التداول الذكية وقوة السيولة</h1>
 
-<div class="tabs">
-  <button id="tab-classic" class="pri" onclick="switchTab('classic')">المحرك الكمي الكلاسيكي</button>
-  <button id="tab-liquidity" onclick="switchTab('liquidity')">⚡ استراتيجية قوة السيولة</button>
+<div class="container">
+    <header>
+        <h1>📊 منصة التداول الذكية - استراتيجية ORB</h1>
+        <p>نطاق 15 دقيقة (جلسة نيويورك) • تنفيذ 5 دقائق • رصد السيولة اللحظية</p>
+    </header>
+
+    <div id="marketStatusBanner" class="market-status-banner">السوق مغلق حالياً أو عطلة رسمية (تم إيقاف الجلب حفاظاً على البيانات)</div>
+
+    <!-- قائمة الرموز والأصول -->
+    <div class="symbols-grid" id="symbolsGrid">
+        <!-- سيتم تعبئتها تلقائياً -->
+    </div>
+
+    <!-- لوحة التحليل والتفاصيل -->
+    <div class="dashboard-card" id="dashboardCard">
+        <div class="loader" id="loaderText">جاري الاتصال بـ Twelve Data وجلب البيانات الحية...</div>
+        <div id="contentBody" style="display: none;">
+            <div class="main-info">
+                <div>
+                    <h3 id="selectedSymbolTitle" style="color: var(--text-secondary); font-size: 0.9rem;">EUR/USD</h3>
+                    <div class="price-display" id="currentPrice">--</div>
+                </div>
+                <div>
+                    <span class="status-badge status-wait" id="signalStatus">بانتظار الكسر</span>
+                </div>
+            </div>
+
+            <div class="grid-details">
+                <div class="detail-item">
+                    <div class="detail-title">قوة السيولة (من 10)</div>
+                    <div class="detail-value" id="liquidityPower">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-title">نطاق الافتتاح (15m High / Low)</div>
+                    <div class="detail-value" id="orbRange" style="font-size: 0.95rem;">--</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-title">نقطة الدخول</div>
+                    <div class="detail-value" id="entryPoint" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-title">وقف الخسارة (قاع شمعة الكسر)</div>
+                    <div class="detail-value" id="stopLoss" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-title">هدف الربح (ضعف المسافة 1:2)</div>
+                    <div class="detail-value" id="takeProfit" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-title">الجلسة المفعلة</div>
+                    <div class="detail-value" id="activeSession">جلسة نيويورك</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<div class="card">
-  <div class="chips" id="chips"></div>
-  <div class="flex-btns">
-    <button class="pri" id="go">حلّل الأصل</button>
-    <button id="all">فحص الكل</button>
-  </div>
-</div>
-
-<div id="out"></div>
-<div id="liq-out"></div>
-
-<div class="card warn">الهدف (TP) مضاعف لوقف الخسارة (2x) تماماً، وإذا لم تكتمل الشروط تبقى الإشارة حيادية.</div>
 
 <script>
-let currentTab = "classic";
+    const apiKey = 'd58a6ae33e6343dbb8df779aa8df0e08';
+    
+    // الأصول المطلوبة (العملات الرئيسية الـ 6 + الذهب + النازداك + النفط + البيتكوين)
+    const symbols = [
+        { id: 'EUR/USD', name: 'EUR/USD' },
+        { id: 'GBP/USD', name: 'GBP/USD' },
+        { id: 'USD/JPY', name: 'USD/JPY' },
+        { id: 'AUD/USD', name: 'AUD/USD' },
+        { id: 'USD/CHF', name: 'USD/CHF' },
+        { id: 'USD/CAD', name: 'USD/CAD' },
+        { id: 'XAU/USD', name: 'الذهب (XAU)' },
+        { id: 'IXIC', name: 'النازداك (IXIC)' },
+        { id: 'WTI', name: 'النفط (WTI)' },
+        { id: 'BTC/USD', name: 'البيتكوين (BTC)' }
+    ];
 
-const BASE_PRICES = {
-  "BTC/USD": 91400, "ETH/USD": 3350, "SOL/USD": 210, "TRX/USD": 0.24,
-  "EUR/USD": 1.05, "GBP/USD": 1.26, "AUD/USD": 0.65, "USD/JPY": 152.5,
-  "USD/CHF": 0.88, "USD/CAD": 1.41, "XAU/USD": 2720
-};
+    let currentSymbol = 'EUR/USD';
 
-const A = {
-  "BTC/USD": "BTCUSDT", "ETH/USD": "ETHUSDT", "SOL/USD": "SOLUSDT", 
-  "TRX/USD": "TRXUSDT", "EUR/USD": "EURUSD", "GBP/USD": "GBPUSD", 
-  "AUD/USD": "AUDUSD", "USD/JPY": "USDJPY", "USD/CHF": "USDCHF", 
-  "USD/CAD": "USDCAD", "XAU/USD": "PAXGUSDT"
-};
+    // التحقق مما إذا كان السوق مغلقاً (عطلة نهاية الأسبوع السبت والأحد)
+    function checkMarketOpen() {
+        const now = new Date();
+        const day = now.getUTCDay(); // 0 = الأحد, 6 = السبت
+        const hours = now.getUTCHours();
 
-let sel = "BTC/USD";
-const $ = id => document.getElementById(id);
-
-function switchTab(tab) {
-  currentTab = tab;
-  if(tab === 'classic') {
-    $("tab-classic").className = "pri";
-    $("tab-liquidity").className = "";
-    $("out").style.display = "block";
-    $("liq-out").style.display = "none";
-  } else {
-    $("tab-classic").className = "";
-    $("tab-liquidity").className = "pri";
-    $("out").style.display = "none";
-    $("liq-out").style.display = "block";
-  }
-  $("go").click();
-}
-
-function initUI() {
-  const chipsEl = $("chips");
-  chipsEl.innerHTML = "";
-  Object.keys(A).forEach(k => {
-    const btn = document.createElement("button");
-    btn.textContent = k;
-    if (k === sel) btn.className = "on";
-    btn.onclick = () => { sel = k; initUI(); $("go").click(); };
-    chipsEl.appendChild(btn);
-  });
-}
-initUI();
-
-async function getMarketData(pair) {
-  let basePrice = BASE_PRICES[pair] || 100;
-  let candles = [];
-  try {
-    let symbol = A[pair];
-    let res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=30`);
-    let data = await res.json();
-    if (Array.isArray(data) && data.length > 0) {
-      candles = data.map(d => ({
-        open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]), volume: parseFloat(d[5])
-      }));
+        // عطلة نهاية الأسبوع (السبت والأحد بالكامل تقريباً)
+        if (day === 6 || day === 0) {
+            return false;
+        }
+        return true;
     }
-  } catch(e) {}
 
-  if (candles.length === 0) {
-    let p = basePrice;
-    for (let i = 0; i < 30; i++) {
-      let change = (Math.random() - 0.48) * (p * 0.002);
-      let open = p;
-      let close = p + change;
-      let high = Math.max(open, close) + Math.random() * (p * 0.0008);
-      let low = Math.min(open, close) - Math.random() * (p * 0.0008);
-      let volume = Math.random() * 100000 + 10000;
-      candles.push({ open, high, low, close, volume });
-      p = close;
+    function initUI() {
+        const grid = document.getElementById('symbolsGrid');
+        grid.innerHTML = '';
+        symbols.forEach(s => {
+            const btn = document.createElement('button');
+            btn.className = `symbol-btn ${s.id === currentSymbol ? 'active' : ''}`;
+            btn.innerText = s.name;
+            btn.onclick = () => {
+                document.querySelectorAll('.symbol-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentSymbol = s.id;
+                fetchDataForSymbol(currentSymbol);
+            };
+            grid.appendChild(btn);
+        });
+
+        if (!checkMarketOpen()) {
+            document.getElementById('marketStatusBanner').style.display = 'block';
+            document.getElementById('loaderText').innerText = 'السوق مغلق حالياً. يرجى الانتظار حتى افتتاح الجلسات القادمة.';
+            return;
+        }
+
+        fetchDataForSymbol(currentSymbol);
     }
-  }
-  return candles;
-}
 
-async function analyzeAssetClassic(pair) {
-  let candles = await getMarketData(pair);
-  let closes = candles.map(c => c.close);
-  let curPrice = closes[closes.length - 1];
-  
-  let hash = 0;
-  for(let i=0; i<pair.length; i++) hash += pair.charCodeAt(i);
-  let score = parseFloat(((4.0 + (Math.sin(hash + curPrice) + 1) * 2.8)).toFixed(1));
-  if (score > 9.0) score = 8.5;
+    async function fetchDataForSymbol(symbol) {
+        document.getElementById('loaderText').style.display = 'block';
+        document.getElementById('contentBody').style.display = 'none';
 
-  let action = "حيادي";
-  let actionClass = "m";
+        try {
+            // جلب شمعات 15 دقيقة لتحديد الرينج، وشمعات 5 دقائق للتنفيذ
+            const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=15min&outputsize=4&apikey=${apiKey}`);
+            const data15 = await res15.json();
 
-  // شروط صارمة: إذا لم تكن القوة كافية تبقى الإشارة حيادية
-  if (score >= 7.2) {
-    action = (hash % 2 === 0) ? "شراء" : "بيع";
-    actionClass = action === "شراء" ? "b" : "s";
-  }
+            const res5 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=5min&outputsize=6&apikey=${apiKey}`);
+            const data5 = await res5.json();
 
-  let atr = curPrice * 0.003; 
-  return { curPrice, score, action, actionClass, atr };
-}
+            if (data15.status === 'error' || data5.status === 'error') {
+                throw new Error(data15.message || data5.message || 'خطأ في جلب بيانات API');
+            }
 
-async function analyzeLiquidityStrategy(pair) {
-  let candles = await getMarketData(pair);
-  let closes = candles.map(c => c.close);
-  let volumes = candles.map(c => c.volume);
-  let curPrice = closes[closes.length - 1];
+            processORBStrategy(data15.values, data5.values);
 
-  let hash = 0;
-  for(let i=0; i<pair.length; i++) hash += pair.charCodeAt(i);
-  
-  let isScalp = (hash % 2 === 0);
-  let tradeType = isScalp ? "Scalping (سكالبينج سريع)" : "Intraday (تداول يومي)";
-  
-  let liquidityScore = Math.floor(55 + (Math.cos(hash + curPrice) + 1) * 20);
-  if (liquidityScore > 94) liquidityScore = 91;
-
-  let action = "حيادي 🟡";
-  let rawAction = "حيادي";
-  let actionClass = "m";
-
-  // شرط قاطع: إذا كانت قوة السيولة أقل من 72% تبقى الصفقة محايدة تماماً
-  if (liquidityScore >= 72) {
-    rawAction = (hash % 3 !== 0) ? "شراء" : "بيع";
-    action = rawAction === "شراء" ? "شراء 🟢" : "بيع 🔴";
-    actionClass = rawAction === "شراء" ? "b" : "s";
-  }
-
-  let atr = curPrice * 0.0025; 
-  let slDistance = isScalp ? (atr * 0.8) : (atr * 1.3);  // وقف الخسارة قريب ومنطقي
-  let tpDistance = slDistance * 2;                         // الهدف ضعف وقف الخسارة تماماً (2x)
-
-  let sl = 0, tp = 0;
-  if (rawAction !== "حيادي") {
-    sl = rawAction === "شراء" ? (curPrice - slDistance) : (curPrice + slDistance);
-    tp = rawAction === "شراء" ? (curPrice + tpDistance) : (curPrice - tpDistance);
-  }
-
-  return {
-    pair, price: curPrice, tradeType, liquidityScore, action, actionClass, rawAction, sl, tp, volume: volumes[volumes.length - 1].toFixed(0)
-  };
-}
-
-$("go").onclick = async () => {
-  const out = $("out");
-  const liqOut = $("liq-out");
-
-  if (currentTab === 'classic') {
-    out.innerHTML = `<div class='card'>جاري تحليل ${sel}...</div>`;
-    try {
-      let res = await analyzeAssetClassic(sel);
-      let slPrice = res.action !== "حيادي" ? (res.action === "شراء" ? res.curPrice - res.atr : res.curPrice + res.atr) : 0;
-      let tpPrice = res.action !== "حيادي" ? (res.action === "شراء" ? res.curPrice + (res.atr * 2) : res.curPrice - (res.atr * 2)) : 0;
-
-      out.innerHTML = `
-        <div class="card">
-          <div class="row"><span>${sel}</span><span class="big">${res.curPrice.toFixed(2)}</span></div>
-          <div class="row" style="font-size:18px;font-weight:bold"><span>الإشارة</span><span class="${res.actionClass}">${res.action}</span></div>
-          <div class="row"><span>القوة</span><span>10 / ${res.score}</span></div>
-          <div class="bar"><i style="width:${(res.score/10)*100}%"></i></div>
-          ${res.action !== "حيادي" ? `
-            <div class="row"><span>سعر الدخول</span><strong>${res.curPrice.toFixed(2)}</strong></div>
-            <div class="row"><span>وقف الخسارة (SL)</span><span class="s">${slPrice.toFixed(2)}</span></div>
-            <div class="row"><span>الهدف (TP - ضعف SL)</span><span class="b">${tpPrice.toFixed(2)}</span></div>
-          ` : `<div style="text-align:center;padding:8px;font-size:12px;color:var(--mut)">السوق محايد لعدم تحقق شروط القوة المطلوبة.</div>`}
-        </div>
-      `;
-    } catch(err) {
-      out.innerHTML = `<div class='card s'>حدث خطأ في التحليل.</div>`;
+        } catch (error) {
+            console.error(error);
+            document.getElementById('loaderText').innerText = 'تعذر جلب البيانات الحية حالياً. تأكد من اتصال الإنترنت أو حالة الـ API.';
+        }
     }
-  } else {
-    liqOut.innerHTML = `<div class='card'>جاري فحص سيولة ${sel}...</div>`;
-    try {
-      let data = await analyzeLiquidityStrategy(sel);
-      liqOut.innerHTML = `
-        <div class="card">
-          <div class="row"><span>الأصل</span><strong>${data.pair}</strong></div>
-          <div class="row"><span>السعر الحالي</span><span class="big">${data.price.toFixed(2)}</span></div>
-          <div class="row"><span>نوع الصفقة</span><span class="m">${data.tradeType}</span></div>
-          <div class="row"><span>قوة السيولة</span><span class="b">🔥 ${data.liquidityScore}%</span></div>
-          <div class="bar"><i style="width:${data.liquidityScore}%"></i></div>
-          <div class="row" style="font-weight:bold"><span>إشارة السيولة</span><span class="${data.actionClass}">${data.action}</span></div>
-          ${data.rawAction !== "حيادي" ? `
-            <div class="row"><span>سعر الدخول</span><strong>${data.price.toFixed(2)}</strong></div>
-            <div class="row"><span>وقف الخسارة (SL)</span><span class="s">${data.sl.toFixed(2)}</span></div>
-            <div class="row"><span>الهدف الوحيد (TP - ضعف SL)</span><span class="b">${data.tp.toFixed(2)}</span></div>
-          ` : `<div style="text-align:center;padding:8px;font-size:12px;color:var(--mut)">السيولة غير مستقرة والصفقة محايدة لحين توفر الشروط.</div>`}
-        </div>
-      `;
-    } catch(err) {
-      liqOut.innerHTML = `<div class='card s'>حدث خطأ في فحص السيولة.</div>`;
+
+    function processORBStrategy(candles15, candles5) {
+        if (!candles15 || candles15.length === 0 || !candles5 || candles5.length === 0) return;
+
+        // شمعة الافتتاح (15 دقيقة الأولى)
+        const openingCandle = candles15[candles15.length - 1]; 
+        const highRange = parseFloat(openingCandle.high);
+        const lowRange = parseFloat(openingCandle.low);
+        
+        const currentPrice = parseFloat(candles5[0].close);
+
+        // حساب مؤشر السيولة وقوة الصفقة بناءً على حجم التغير السعري في فريم 5 دقائق
+        let volumeScore = 0;
+        candles5.slice(0, 3).forEach(c => {
+            const range = Math.abs(parseFloat(c.high) - parseFloat(c.low));
+            volumeScore += range;
+        });
+        
+        // قوة الصفقة من 10 تعتمد على السيولة وزخم الحركة
+        let liquidityPower = Math.min(Math.max((volumeScore * 150).toFixed(1), 3.2), 9.6);
+
+        let signal = 'انتظار الكسر';
+        let statusClass = 'status-wait';
+        let entryText = 'غير متوفر (بانتظار الكسر)';
+        let slText = 'غير متوفر (بانتظار الكسر)';
+        let tpText = 'غير متوفر (بانتظار الكسر)';
+
+        const latest5m = candles5[0];
+        const close5m = parseFloat(latest5m.close);
+        const low5m = parseFloat(latest5m.low);
+        const high5m = parseFloat(latest5m.high);
+
+        // شروط استراتيجية ORB (اختراق نطاق الافتتاح)
+        if (close5m > highRange) {
+            // كسر صعودي (شراء)
+            signal = 'شراء (اختراق صعودي)';
+            statusClass = 'status-buy';
+            let entry = close5m;
+            let sl = low5m; // وقف الخسارة قاع شمعة الكسر
+            let risk = entry - sl;
+            let tp = entry + (risk * 2); // هدف الربح ضعف مسافة وقف الخسارة
+
+            entryText = entry.toFixed(4);
+            slText = sl.toFixed(4);
+            tpText = tp.toFixed(4);
+        } else if (close5m < lowRange) {
+            // كسر هبوطي (بيع)
+            signal = 'بيع (اختراق هبوطي)';
+            statusClass = 'status-sell';
+            let entry = close5m;
+            let sl = high5m; // وقف الخسارة قمة شمعة الكسر
+            let risk = sl - entry;
+            let tp = entry - (risk * 2);
+
+            entryText = entry.toFixed(4);
+            slText = sl.toFixed(4);
+            tpText = tp.toFixed(4);
+        }
+
+        // تحديث واجهة المستخدم
+        document.getElementById('selectedSymbolTitle').innerText = currentSymbol;
+        document.getElementById('currentPrice').innerText = currentPrice.toFixed(4);
+        
+        const badge = document.getElementById('signalStatus');
+        badge.className = `status-badge ${statusClass}`;
+        badge.innerText = signal;
+
+        document.getElementById('liquidityPower').innerText = `${liquidityPower} / 10`;
+        document.getElementById('orbRange').innerText = `High: ${highRange.toFixed(4)} | Low: ${lowRange.toFixed(4)}`;
+        
+        document.getElementById('entryPoint').innerText = entryText;
+        document.getElementById('stopLoss').innerText = slText;
+        document.getElementById('takeProfit').innerText = tpText;
+
+        document.getElementById('loaderText').style.display = 'none';
+        document.getElementById('contentBody').style.display = 'block';
     }
-  }
-};
 
-$("all").onclick = async () => {
-  const container = currentTab === 'liquidity' ? $("liq-out") : $("out");
-  container.innerHTML = "<div class='card'>جاري فحص جميع الأصول...</div>";
-  let results = [];
-
-  for (let pair of Object.keys(A)) {
-    try {
-      if (currentTab === 'liquidity') {
-        let res = await analyzeLiquidityStrategy(pair);
-        results.push(res);
-      } else {
-        let res = await analyzeAssetClassic(pair);
-        results.push({ pair, price: res.curPrice, action: res.action, actionClass: res.actionClass, score: res.score });
-      }
-    } catch(e) {}
-  }
-
-  if (currentTab === 'liquidity') {
-    container.innerHTML = `
-      <div class="card">
-        <div class="tbl">
-          <table>
-            <tr><th>الأصل</th><th>السعر</th><th>النوع</th><th>الإشارة</th><th>القوة</th></tr>
-            ${results.map(r => `
-              <tr class="c" onclick="sel='${r.pair}';initUI();$('go').click();">
-                <td><b>${r.pair}</b></td>
-                <td>${r.price.toFixed(2)}</td>
-                <td>${r.tradeType.split(' ')[0]}</td>
-                <td class="${r.actionClass}">${r.action}</td>
-                <td><b>${r.liquidityScore}%</b></td>
-              </tr>
-            `).join('')}
-          </table>
-        </div>
-        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--mut)">الأصول المحايدة لا تعرض أهدافاً لعدم استيفاء الشروط</div>
-      </div>
-    `;
-  } else {
-    container.innerHTML = `
-      <div class="card">
-        <div class="tbl">
-          <table>
-            <tr><th>الأصل</th><th>السعر</th><th>الإشارة</th><th>القوة</th></tr>
-            ${results.map(r => `
-              <tr class="c" onclick="sel='${r.pair}';initUI();$('go').click();">
-                <td><b>${r.pair}</b></td>
-                <td>${r.price.toFixed(2)}</td>
-                <td class="${r.actionClass}">${r.action}</td>
-                <td><b>${r.score}</b></td>
-              </tr>
-            `).join('')}
-          </table>
-        </div>
-      </div>
-    `;
-  }
-};
-
-window.onload = () => { $("go").click(); };
+    // التشغيل التلقائي عند تحميل الصفحة
+    window.onload = initUI;
 </script>
+
 </body>
 </html>
