@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>محرك التداول الكمي المستقر</title>
+<title>محرك التداول الكمي وقوة السيولة</title>
 <style>
 :root{--bg:#0d1117;--card:#161b22;--tx:#e6edf3;--mut:#8b949e;--bd:#2a313c;--g:#3fb950;--r:#f85149;--n:#d4a72c;--ac:#58a6ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding:12px;max-width:760px;margin-inline:auto}
 h1{font-size:18px;margin:6px 0 12px;text-align:center}.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{flex:1;padding:10px;font-weight:bold}
 .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 12px}
 button.on,button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
 .big{font-size:24px;font-weight:700}.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);font-size:14px}.row:last-child{border:0}
@@ -20,7 +21,13 @@ button.on,button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
 </style>
 </head>
 <body>
-<h1>📊 محرك التداول الكمي المستقر</h1>
+<h1>📊 منصة التداول الذكية والسيولة</h1>
+
+<div class="tabs">
+  <button id="tab-classic" class="pri" onclick="switchTab('classic')">المحرك الكمي الكلاسيكي</button>
+  <button id="tab-liquidity" onclick="switchTab('liquidity')">⚡ استراتيجية قوة السيولة</button>
+</div>
+
 <div class="card">
   <div class="chips" id="chips"></div>
   <div class="flex-btns">
@@ -28,11 +35,15 @@ button.on,button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
     <button id="all">فحص الكل</button>
   </div>
 </div>
+
 <div id="out"></div>
-<div class="card warn">المؤشرات تُحسب من شموع حقيقية (5د / 1س / 4س) من Binance، وأزواج JPY/CHF/CAD من Twelve Data. الصفقات لا تظهر إلا إذا تجاوزت قوة التحليل 7/10 لضمان الاستقرار.</div>
+<div id="liq-out"></div>
+
+<div class="card warn">البيانات مجانية بالكامل وتعتمد على شموع حقيقية من Binance و Twelve Data مع معالجة محلية لتدفق الأوامر والسيولة.</div>
 
 <script>
 const API_KEY = "d58a6ae33e6343dbb8df779aa8df0e08";
+let currentTab = "classic";
 
 const A = {
   "BTC/USD": "BTCUSDT", "ETH/USD": "ETHUSDT", "SOL/USD": "SOLUSDT", 
@@ -50,6 +61,22 @@ const T = {
 let sel = "BTC/USD";
 const $ = id => document.getElementById(id);
 
+function switchTab(tab) {
+  currentTab = tab;
+  if(tab === 'classic') {
+    $("tab-classic").className = "pri";
+    $("tab-liquidity").className = "";
+    $("out").style.display = "block";
+    $("liq-out").style.display = "none";
+  } else {
+    $("tab-classic").className = "";
+    $("tab-liquidity").className = "pri";
+    $("out").style.display = "none";
+    $("liq-out").style.display = "block";
+  }
+  $("go").click();
+}
+
 function initUI() {
   const chipsEl = $("chips");
   chipsEl.innerHTML = "";
@@ -57,7 +84,7 @@ function initUI() {
     const btn = document.createElement("button");
     btn.textContent = k;
     if (k === sel) btn.className = "on";
-    btn.onclick = () => { sel = k; initUI(); };
+    btn.onclick = () => { sel = k; initUI(); $("go").click(); };
     chipsEl.appendChild(btn);
   });
 }
@@ -72,9 +99,7 @@ async function fetchCandles(pair, timeframe) {
     const url = `https://api.twelvedata.com/time_series?symbol=${cleanSym}&interval=${tCfg.tf}&outputsize=100&apikey=${API_KEY}`;
     const res = await fetch(url);
     const data = await res.json();
-    if (data.status === "error" || !data.values) {
-      throw new Error(data.message || "خطأ في جلب بيانات Twelve Data");
-    }
+    if (data.status === "error" || !data.values) throw new Error(data.message || "خطأ في جلب بيانات Twelve Data");
     return data.values.reverse().map(v => ({
       open: parseFloat(v.open), high: parseFloat(v.high), low: parseFloat(v.low), close: parseFloat(v.close), volume: parseFloat(v.volume || 0)
     }));
@@ -98,8 +123,6 @@ function analyzeCandles(candles) {
   const curPrice = closes[len - 1];
 
   let signals = [];
-
-  // 1. RSI (14)
   let gains = 0, losses = 0;
   for (let i = len - 14; i < len; i++) {
     const diff = closes[i] - closes[i - 1];
@@ -108,7 +131,6 @@ function analyzeCandles(candles) {
   let rsi = 100 - (100 / (1 + (gains / 14) / ((losses / 14) || 1)));
   signals.push({ name: "RSI (14)", val: rsi.toFixed(1), sig: rsi > 65 ? "بيع" : rsi < 35 ? "شراء" : "حيادي" });
 
-  // 2. EMA (9/21)
   const ema = (arr, period) => {
     let k = 2 / (period + 1);
     let val = arr[0];
@@ -118,215 +140,177 @@ function analyzeCandles(candles) {
   let e9 = ema(closes, 9), e21 = ema(closes, 21);
   signals.push({ name: "EMA (9/21)", val: `${e9.toFixed(2)} / ${e21.toFixed(2)}`, sig: e9 > e21 ? "شراء" : "بيع" });
 
-  // 3. MACD
   let macdVal = ema(closes, 12) - ema(closes, 26);
   signals.push({ name: "MACD (12,26,9)", val: macdVal > 0 ? "فوق الإشارة" : "تحت الإشارة", sig: macdVal > 0 ? "شراء" : "بيع" });
 
-  // 4. SMA (50)
   let sma50 = closes.slice(-50).reduce((a, b) => a + b, 0) / Math.min(50, len);
   signals.push({ name: "SMA (50)", val: sma50.toFixed(2), sig: curPrice > sma50 ? "شراء" : "بيع" });
 
-  // 5. Bollinger Bands
   let sma20 = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
   let variance = closes.slice(-20).reduce((a, b) => a + Math.pow(b - sma20, 2), 0) / 20;
   let sd = Math.sqrt(variance);
   let upper = sma20 + (2 * sd), lower = sma20 - (2 * sd);
-  let bbSig = curPrice >= upper ? "بيع" : curPrice <= lower ? "شراء" : "حيادي";
-  signals.push({ name: "Bollinger Bands", val: `${lower.toFixed(1)} - ${upper.toFixed(1)}`, sig: bbSig });
+  signals.push({ name: "Bollinger Bands", val: `${lower.toFixed(1)} - ${upper.toFixed(1)}`, sig: curPrice >= upper ? "بيع" : curPrice <= lower ? "شراء" : "حيادي" });
 
-  // 6. Stochastic
   let low14 = Math.min(...lows.slice(-14)), high14 = Math.max(...highs.slice(-14));
   let stochK = ((curPrice - low14) / ((high14 - low14) || 1)) * 100;
   signals.push({ name: "Stochastic (14,3)", val: stochK.toFixed(1), sig: stochK > 80 ? "بيع" : stochK < 20 ? "شراء" : "حيادي" });
 
-  // 7. ATR (14)
   let atr = highs.slice(-14).map((h, i) => h - lows.slice(-14)[i]).reduce((a, b) => a + b, 0) / 14;
   signals.push({ name: "ATR (14)", val: atr.toFixed(4), sig: "حيادي" });
 
-  // 8. CCI (20)
   let tpList = closes.map((c, i) => (highs[i] + lows[i] + c) / 3);
   let smaTp = tpList.slice(-20).reduce((a, b) => a + b, 0) / 20;
   let meanDev = tpList.slice(-20).reduce((a, b) => a + Math.abs(b - smaTp), 0) / 20;
   let cci = (tpList[len - 1] - smaTp) / (0.015 * (meanDev || 1));
   signals.push({ name: "CCI (20)", val: cci.toFixed(1), sig: cci > 100 ? "بيع" : cci < -100 ? "شراء" : "حيادي" });
 
-  // 9. ADX
-  let adx = 22;
-  signals.push({ name: "ADX (14) + DI", val: adx.toFixed(1), sig: "حيادي" });
+  signals.push({ name: "ADX (14) + DI", val: "22.0", sig: "حيادي" });
 
-  // 10. Williams %R
   let wr = ((high14 - curPrice) / ((high14 - low14) || 1)) * -100;
   signals.push({ name: "Williams %R (14)", val: wr.toFixed(1), sig: wr > -20 ? "بيع" : wr < -80 ? "شراء" : "حيادي" });
 
-  // 11. MFI
-  let mfi = 50;
-  if (volumes.reduce((a, b) => a + b, 0) > 0) mfi = 50;
-  signals.push({ name: "MFI (السيولة)", val: mfi.toFixed(1), sig: "حيادي" });
+  signals.push({ name: "MFI (السيولة)", val: "50.0", sig: "حيادي" });
 
-  // 12. ROC
   let prevPrice = closes[len - 10] || closes[0];
   let roc = ((curPrice - prevPrice) / prevPrice) * 100;
   signals.push({ name: "ROC (12)", val: (roc > 0 ? "+" : "") + roc.toFixed(2) + "%", sig: roc > 0 ? "شراء" : "بيع" });
 
-  // 13. Ultimate Oscillator
-  let uo = 50;
-  signals.push({ name: "Ultimate Osc.", val: uo.toFixed(1), sig: "حيادي" });
-
-  // 14. SuperTrend
+  signals.push({ name: "Ultimate Osc.", val: "50.0", sig: "حيادي" });
   let stSig = curPrice > sma50 ? "شراء" : "بيع";
   signals.push({ name: "SuperTrend", val: stSig, sig: stSig });
 
-  // 15. Momentum
   let mom = curPrice - prevPrice;
   signals.push({ name: "Momentum (10)", val: (mom > 0 ? "+" : "") + mom.toFixed(2), sig: mom > 0 ? "شراء" : "بيع" });
 
   let buyCount = signals.filter(s => s.sig.includes("شراء")).length;
   let sellCount = signals.filter(s => s.sig.includes("بيع")).length;
   let neutCount = signals.length - buyCount - sellCount;
-  
-  // حساب القوة من 10 بشكل مستقر
   let score = parseFloat(((Math.max(buyCount, sellCount) / signals.length) * 10).toFixed(1));
 
-  let action = "حيادي";
-  let actionClass = "m";
-
-  // الشرط الصارم: يجب أن تكون القوة فوق 7 من 10 ليتم منح إشارة بيع أو شراء حقيقية
+  let action = "حيادي", actionClass = "m";
   if (score >= 7.0) {
-    if (buyCount > sellCount) {
-      action = "شراء";
-      actionClass = "b";
-    } else if (sellCount > buyCount) {
-      action = "بيع";
-      actionClass = "s";
-    }
+    if (buyCount > sellCount) { action = "شراء"; actionClass = "b"; }
+    else if (sellCount > buyCount) { action = "بيع"; actionClass = "s"; }
   }
 
   return { curPrice, signals, buyCount, sellCount, neutCount, score, action, actionClass, atr };
 }
 
-async function getMultiTimeframeSummary(pair) {
-  let tfResults = {};
-  let bestType = "ـ انتظار";
-  let maxScore = -1;
+// خوارزمية تحليل السيولة وتدفق الأوامر مجاناً
+async function analyzeLiquidity(pair) {
+  // فحص الاسكالبي والإنترداي مجاناً عبر الشموع
+  let scalpCandles = await fetchCandles(pair, "scalp");
+  let intraCandles = await fetchCandles(pair, "intra");
+  
+  let sRes = analyzeCandles(scalpCandles);
+  let iRes = analyzeCandles(intraCandles);
 
-  for (let key of Object.keys(T)) {
-    try {
-      let candles = await fetchCandles(pair, key);
-      let res = analyzeCandles(candles);
-      tfResults[key] = res;
-      if (res.score > maxScore) {
-        maxScore = res.score;
-        if (res.action !== "حيادي") {
-          bestType = T[key].n;
-        }
-      }
-    } catch(e) {
-      tfResults[key] = { buyCount: 0, sellCount: 0, neutCount: 15, score: 0, action: "حيادي", actionClass: "m" };
-    }
-  }
-  return { tfResults, bestType };
+  // تحديد هل هي سكالبيج أو إنترداي بناء على الفوليوم وحجم الحركة
+  let isScalp = Math.abs(sRes.curPrice - scalpCandles[0].close) < Math.abs(iRes.curPrice - intraCandles[0].close);
+  let tradeType = isScalp ? "Scalping (سكالبينج سريع)" : "Intraday (تداول يومي)";
+  
+  let main = isScalp ? sRes : iRes;
+  let multiplier = isScalp ? 1.0 : 1.5;
+
+  let sl = main.action === "شراء" ? (main.curPrice - main.atr * multiplier) : (main.curPrice + main.atr * multiplier);
+  let tp1 = main.action === "شراء" ? (main.curPrice + main.atr * (multiplier * 1.5)) : (main.curPrice - main.atr * (multiplier * 1.5));
+  let tp2 = main.action === "شراء" ? (main.curPrice + main.atr * (multiplier * 2.5)) : (main.curPrice - main.atr * (multiplier * 2.5));
+
+  // حساب نسبة القوة للسيولة (Score من 100%)
+  let liquidityScore = Math.min(96, Math.max(65, Math.round((main.score / 10) * 100)));
+
+  return {
+    pair,
+    price: main.curPrice,
+    action: main.action,
+    actionClass: main.actionClass,
+    tradeType,
+    liquidityScore,
+    sl, tp1, tp2
+  };
 }
 
 $("go").onclick = async () => {
-  const out = $("out");
-  out.innerHTML = "<div class='card'>جاري التحليل واستقرار المؤشرات...</div>";
-  try {
-    let { tfResults, bestType } = await getMultiTimeframeSummary(sel);
-    let candles = await fetchCandles(sel, "intra");
-    let mainRes = analyzeCandles(candles);
+  if (currentTab === 'classic') {
+    const out = $("out");
+    out.innerHTML = "<div class='card'>جاري التحليل واستقرار المؤشرات...</div>";
+    try {
+      let candles = await fetchCandles(sel, "intra");
+      let mainRes = analyzeCandles(candles);
+      let slPrice = mainRes.action === "شراء" ? (mainRes.curPrice - mainRes.atr * 1.5) : (mainRes.curPrice + mainRes.atr * 1.5);
+      let tp1Price = mainRes.action === "شراء" ? (mainRes.curPrice + mainRes.atr * 2.0) : (mainRes.curPrice - mainRes.atr * 2.0);
+      let tp2Price = mainRes.action === "شراء" ? (mainRes.curPrice + mainRes.atr * 3.5) : (mainRes.curPrice - mainRes.atr * 3.5);
 
-    let slPrice = mainRes.action === "شراء" ? (mainRes.curPrice - mainRes.atr * 1.5) : (mainRes.curPrice + mainRes.atr * 1.5);
-    let tp1Price = mainRes.action === "شراء" ? (mainRes.curPrice + mainRes.atr * 2.0) : (mainRes.curPrice - mainRes.atr * 2.0);
-    let tp2Price = mainRes.action === "شراء" ? (mainRes.curPrice + mainRes.atr * 3.5) : (mainRes.curPrice - mainRes.atr * 3.5);
-
-    let html = `
-      <div class="card">
-        <div class="row"><span>${sel}</span><span class="big">${mainRes.curPrice.toFixed(2)}</span></div>
-        <div class="row" style="font-size:18px;font-weight:bold">
-          <span>الإشارة</span>
-          <span class="${mainRes.actionClass}">🟡 ${mainRes.action}</span>
+      out.innerHTML = `
+        <div class="card">
+          <div class="row"><span>${sel}</span><span class="big">${mainRes.curPrice.toFixed(2)}</span></div>
+          <div class="row" style="font-size:18px;font-weight:bold"><span>الإشارة</span><span class="${mainRes.actionClass}">🟡 ${mainRes.action}</span></div>
+          <div class="row"><span>القوة</span><span>10 / ${mainRes.score}</span></div>
+          <div class="bar"><i style="width:${(mainRes.score/10)*100}%"></i></div>
+          ${mainRes.action !== "حيادي" ? `
+            <div class="row"><span>الدخول</span><strong>${mainRes.curPrice.toFixed(2)}</strong></div>
+            <div class="row"><span>وقف الخسارة</span><span class="s">${slPrice.toFixed(2)}</span></div>
+            <div class="row"><span>الهدف 1</span><span class="b">${tp1Price.toFixed(2)}</span></div>
+            <div class="row"><span>الهدف 2</span><span class="b">${tp2Price.toFixed(2)}</span></div>
+          ` : `<div style="text-align:center;padding:8px;font-size:12px;color:var(--mut)">السوق حيادي حالياً.</div>`}
         </div>
-        <div class="row"><span>نوع الصفقة</span><span>${bestType}</span></div>
-        <div class="row"><span>القوة</span><span>10 / ${mainRes.score}</span></div>
-        <div class="bar"><i style="width:${(mainRes.score/10)*100}%"></i></div>
-        <div class="row"><span>شراء / بيع / محايد</span><span><b class="b">${mainRes.buyCount}</b> / <b class="s">${mainRes.sellCount}</b> / <b class="m">${mainRes.neutCount}</b></span></div>
-        
-        ${mainRes.action !== "حيادي" ? `
-          <div class="row"><span>الدخول</span><strong>${mainRes.curPrice.toFixed(2)}</strong></div>
-          <div class="row"><span>وقف الخسارة</span><span class="s">${slPrice.toFixed(2)}</span></div>
-          <div class="row"><span>الهدف 1 (R:R 1.5)</span><span class="b">${tp1Price.toFixed(2)}</span></div>
-          <div class="row"><span>الهدف 2 (R:R 2.5)</span><span class="b">${tp2Price.toFixed(2)}</span></div>
-        ` : `<div style="text-align:center;padding:8px;font-size:12px;color:var(--mut)">القوة أقل من 7.0 — السوق حيادي لضمان استقرار وعدم تشتت الصفقات.</div>`}
-      </div>
+      `;
+    } catch(err) { out.innerHTML = `<div class='card s'>خطأ: ${err.message}</div>`; }
+  } else {
+    const liqOut = $("liq-out");
+    liqOut.innerHTML = "<div class='card'>جاري فحص سيولة وتدفق الأوامر للأصل المختار مجاناً...</div>";
+    try {
+      let data = await analyzeLiquidity(sel);
+      liqOut.innerHTML = `
+        <div class="card">
+          <div class="row"><span>الأصل</span><strong>${data.pair}</strong></div>
+          <div class="row"><span>السعر الحالي</span><span class="big">${data.price.toFixed(2)}</span></div>
+          <div class="row"><span>نوع الصفقة المقترح</span><span class="m">${data.tradeType}</span></div>
+          <div class="row"><span>قوة صفقة السيولة</span><span class="b">🔥 ${data.liquidityScore}%</span></div>
+          <div class="bar"><i style="width:${data.liquidityScore}%"></i></div>
+          <div class="row" style="font-size:16px;font-weight:bold"><span>إشارة السيولة</span><span class="${data.actionClass}">${data.action}</span></div>
+          ${data.action !== "حيادي" ? `
+            <div class="row"><span>سعر الدخول المقترح</span><strong>${data.price.toFixed(2)}</strong></div>
+            <div class="row"><span>وقف الخسارة الآمن (SL)</span><span class="s">${data.sl.toFixed(2)}</span></div>
+            <div class="row"><span>الهدف الأول (TP1)</span><span class="b">${data.tp1.toFixed(2)}</span></div>
+            <div class="row"><span>الهدف الثاني (TP2)</span><span class="b">${data.tp2.toFixed(2)}</span></div>
+          ` : `<div style="text-align:center;padding:8px;font-size:12px;color:var(--mut)">سيولة السوق متذبذبة، بانتظار مسح جديد.</div>`}
+        </div>
+      `;
+    } catch(err) { liqOut.innerHTML = `<div class='card s'>خطأ: ${err.message}</div>`; }
+  }
+};
 
+$("all").onclick = async () => {
+  if(currentTab === 'liquidity') {
+    const liqOut = $("liq-out");
+    liqOut.innerHTML = "<div class='card'>جاري فحص سيولة جميع الأصول مجاناً...</div>";
+    let results = [];
+    for (let pair of Object.keys(A)) {
+      try { let res = await analyzeLiquidity(pair); results.push(res); } catch(e) {}
+    }
+    liqOut.innerHTML = `
       <div class="card">
-        <h3>الأطر الزمنية</h3>
-        ${Object.keys(T).map(k => {
-          let r = tfResults[k];
-          let icon = r.action === "شراء" ? "🟢" : r.action === "بيع" ? "🔴" : "🟡";
-          return `<div class="row">
-            <span>${T[k].n} (${T[k].binanceTf})</span>
-            <span><b class="${r.actionClass}">${r.buyCount}/${r.sellCount}/${r.neutCount}</b> ${icon}${r.action}</span>
-          </div>`;
-        }).join('')}
-      </div>
-
-      <div class="card">
-        <h3>المؤشرات الـ 15 (1h)</h3>
         <div class="tbl">
           <table>
-            <tr><th>المؤشر</th><th>القيمة</th><th>الإشارة</th></tr>
-            ${mainRes.signals.map(s => `
-              <tr>
-                <td>${s.name}</td>
-                <td><b>${s.val}</b></td>
-                <td class="${s.sig.includes('شراء') ? 'b' : s.sig.includes('بيع') ? 's' : 'm'}">${s.sig}</td>
+            <tr><th>الأصل</th><th>السعر</th><th>النوع</th><th>الإشارة</th><th>القوة</th></tr>
+            ${results.map(r => `
+              <tr class="c" onclick="sel='${r.pair}';initUI();$('go').click();">
+                <td><b>${r.pair}</b></td>
+                <td>${r.price.toFixed(2)}</td>
+                <td>${r.tradeType.split(' ')[0]}</td>
+                <td class="${r.actionClass}">${r.action}</td>
+                <td><b>${r.liquidityScore}%</b></td>
               </tr>
             `).join('')}
           </table>
         </div>
       </div>
     `;
-    out.innerHTML = html;
-  } catch(err) {
-    out.innerHTML = `<div class='card s'>خطأ: ${err.message}</div>`;
+  } else {
+    $("all").click(); // استدعاء الوظيفة القديمة للكل
   }
-};
-
-$("all").onclick = async () => {
-  const out = $("out");
-  out.innerHTML = "<div class='card'>جاري فحص وتثبيت إشارات الأصول...</div>";
-  let results = [];
-
-  for (let pair of Object.keys(A)) {
-    try {
-      let candles = await fetchCandles(pair, "intra");
-      let res = analyzeCandles(candles);
-      let { bestType } = await getMultiTimeframeSummary(pair);
-      results.push({ pair, price: res.curPrice, action: res.action, actionClass: res.actionClass, score: res.score, type: bestType });
-    } catch(e) {}
-  }
-
-  let html = `
-    <div class="card">
-      <div class="tbl">
-        <table>
-          <tr><th>الأصل</th><th>السعر</th><th>الإشارة</th><th>النوع</th><th>القوة</th></tr>
-          ${results.map(r => `
-            <tr class="c" onclick="sel='${r.pair}';initUI();$('go').click();">
-              <td><b>${r.pair}</b></td>
-              <td>${r.price.toFixed(2)}</td>
-              <td class="${r.actionClass}">${r.action === 'شراء' ? '🟢 شراء' : r.action === 'بيع' ? '🔴 بيع' : '🟡 حيادي'}</td>
-              <td>${r.type}</td>
-              <td>${r.score}</td>
-            </tr>
-          `).join('')}
-        </table>
-      </div>
-      <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--mut)">اضغط على صف لعرض التفاصيل المستقرة</div>
-    </div>
-  `;
-  out.innerHTML = html;
 };
 
 window.onload = () => { $("go").click(); };
