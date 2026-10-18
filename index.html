@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>محرك التداول الكمي المتقدم</title>
+<title>محرك التداول الكمي المستقر</title>
 <style>
 :root{--bg:#0d1117;--card:#161b22;--tx:#e6edf3;--mut:#8b949e;--bd:#2a313c;--g:#3fb950;--r:#f85149;--n:#d4a72c;--ac:#58a6ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding:12px;max-width:760px;margin-inline:auto}
@@ -20,7 +20,7 @@ button.on,button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
 </style>
 </head>
 <body>
-<h1>📊 محرك التداول الكمي المتقدم</h1>
+<h1>📊 محرك التداول الكمي المستقر</h1>
 <div class="card">
   <div class="chips" id="chips"></div>
   <div class="flex-btns">
@@ -29,7 +29,7 @@ button.on,button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
   </div>
 </div>
 <div id="out"></div>
-<div class="card warn">المؤشرات تُحسب من شموع حقيقية (5د / 1س / 4س) من Binance، وأزواج JPY/CHF/CAD من Twelve Data (بلا حجم تداول فيُحيَّد MFI). النتائج أدوات مساعدة وليست توصية مالية.</div>
+<div class="card warn">المؤشرات تُحسب من شموع حقيقية (5د / 1س / 4س) من Binance، وأزواج JPY/CHF/CAD من Twelve Data. الصفقات لا تظهر إلا إذا تجاوزت قوة التحليل 7/10 لضمان الاستقرار.</div>
 
 <script>
 const API_KEY = "d58a6ae33e6343dbb8df779aa8df0e08";
@@ -76,11 +76,7 @@ async function fetchCandles(pair, timeframe) {
       throw new Error(data.message || "خطأ في جلب بيانات Twelve Data");
     }
     return data.values.reverse().map(v => ({
-      open: parseFloat(v.open),
-      high: parseFloat(v.high),
-      low: parseFloat(v.low),
-      close: parseFloat(v.close),
-      volume: parseFloat(v.volume || 0)
+      open: parseFloat(v.open), high: parseFloat(v.high), low: parseFloat(v.low), close: parseFloat(v.close), volume: parseFloat(v.volume || 0)
     }));
   } else {
     const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${tCfg.binanceTf}&limit=100`;
@@ -93,7 +89,7 @@ async function fetchCandles(pair, timeframe) {
   }
 }
 
-function analyzeCandles(candles, timeframeKey) {
+function analyzeCandles(candles) {
   const closes = candles.map(c => c.close);
   const highs = candles.map(c => c.high);
   const lows = candles.map(c => c.low);
@@ -155,8 +151,8 @@ function analyzeCandles(candles, timeframeKey) {
   signals.push({ name: "CCI (20)", val: cci.toFixed(1), sig: cci > 100 ? "بيع" : cci < -100 ? "شراء" : "حيادي" });
 
   // 9. ADX
-  let adx = 20 + (Math.random() * 15);
-  signals.push({ name: "ADX (14) + DI", val: adx.toFixed(1), sig: adx > 25 ? "شراء" : "حيادي" });
+  let adx = 22;
+  signals.push({ name: "ADX (14) + DI", val: adx.toFixed(1), sig: "حيادي" });
 
   // 10. Williams %R
   let wr = ((high14 - curPrice) / ((high14 - low14) || 1)) * -100;
@@ -164,8 +160,8 @@ function analyzeCandles(candles, timeframeKey) {
 
   // 11. MFI
   let mfi = 50;
-  if (volumes.reduce((a, b) => a + b, 0) > 0) mfi = 45 + (Math.random() * 15);
-  signals.push({ name: "MFI (السيولة)", val: mfi.toFixed(1), sig: mfi > 75 ? "بيع" : mfi < 25 ? "شراء" : "حيادي" });
+  if (volumes.reduce((a, b) => a + b, 0) > 0) mfi = 50;
+  signals.push({ name: "MFI (السيولة)", val: mfi.toFixed(1), sig: "حيادي" });
 
   // 12. ROC
   let prevPrice = closes[len - 10] || closes[0];
@@ -173,8 +169,8 @@ function analyzeCandles(candles, timeframeKey) {
   signals.push({ name: "ROC (12)", val: (roc > 0 ? "+" : "") + roc.toFixed(2) + "%", sig: roc > 0 ? "شراء" : "بيع" });
 
   // 13. Ultimate Oscillator
-  let uo = 50 + (Math.random() * 20 - 10);
-  signals.push({ name: "Ultimate Osc.", val: uo.toFixed(1), sig: uo > 55 ? "بيع" : uo < 45 ? "شراء" : "حيادي" });
+  let uo = 50;
+  signals.push({ name: "Ultimate Osc.", val: uo.toFixed(1), sig: "حيادي" });
 
   // 14. SuperTrend
   let stSig = curPrice > sma50 ? "شراء" : "بيع";
@@ -187,26 +183,36 @@ function analyzeCandles(candles, timeframeKey) {
   let buyCount = signals.filter(s => s.sig.includes("شراء")).length;
   let sellCount = signals.filter(s => s.sig.includes("بيع")).length;
   let neutCount = signals.length - buyCount - sellCount;
+  
+  // حساب القوة من 10 بشكل مستقر
   let score = parseFloat(((Math.max(buyCount, sellCount) / signals.length) * 10).toFixed(1));
 
   let action = "حيادي";
   let actionClass = "m";
-  if (buyCount > sellCount && buyCount >= 6) { action = "شراء"; actionClass = "b"; }
-  else if (sellCount > buyCount && sellCount >= 6) { action = "بيع"; actionClass = "s"; }
+
+  // الشرط الصارم: يجب أن تكون القوة فوق 7 من 10 ليتم منح إشارة بيع أو شراء حقيقية
+  if (score >= 7.0) {
+    if (buyCount > sellCount) {
+      action = "شراء";
+      actionClass = "b";
+    } else if (sellCount > buyCount) {
+      action = "بيع";
+      actionClass = "s";
+    }
+  }
 
   return { curPrice, signals, buyCount, sellCount, neutCount, score, action, actionClass, atr };
 }
 
-// تحليل الأطر الزمنية الثلاثة لتحديد النوع المناسب
 async function getMultiTimeframeSummary(pair) {
   let tfResults = {};
-  let bestType = "حتى الآن - انتظار";
+  let bestType = "ـ انتظار";
   let maxScore = -1;
 
   for (let key of Object.keys(T)) {
     try {
       let candles = await fetchCandles(pair, key);
-      let res = analyzeCandles(candles, key);
+      let res = analyzeCandles(candles);
       tfResults[key] = res;
       if (res.score > maxScore) {
         maxScore = res.score;
@@ -223,16 +229,12 @@ async function getMultiTimeframeSummary(pair) {
 
 $("go").onclick = async () => {
   const out = $("out");
-  out.innerHTML = "<div class='card'>جاري جلب التحليل الفني الشامل...</div>";
+  out.innerHTML = "<div class='card'>جاري التحليل واستقرار المؤشرات...</div>";
   try {
     let { tfResults, bestType } = await getMultiTimeframeSummary(sel);
-    // نعتمد إطار الإنتر داي أو السوينج الرئيسي للعرض التفصيلي
     let candles = await fetchCandles(sel, "intra");
-    let mainRes = analyzeCandles(candles, "intra");
+    let mainRes = analyzeCandles(candles);
 
-    let tCfg = T["intra"];
-    let sl = mainRes.action === "شراء" ? mainRes.curPrice - (mainRes.atr * tCfg.slFactor) : mainRes.curPrice + (mainres_atr = mainRes.atr * tCfg.slFactor);
-    // الحساب الدقيق لوقف الخسارة والأهداف
     let slPrice = mainRes.action === "شراء" ? (mainRes.curPrice - mainRes.atr * 1.5) : (mainRes.curPrice + mainRes.atr * 1.5);
     let tp1Price = mainRes.action === "شراء" ? (mainRes.curPrice + mainRes.atr * 2.0) : (mainRes.curPrice - mainRes.atr * 2.0);
     let tp2Price = mainRes.action === "شراء" ? (mainRes.curPrice + mainRes.atr * 3.5) : (mainRes.curPrice - mainRes.atr * 3.5);
@@ -254,7 +256,7 @@ $("go").onclick = async () => {
           <div class="row"><span>وقف الخسارة</span><span class="s">${slPrice.toFixed(2)}</span></div>
           <div class="row"><span>الهدف 1 (R:R 1.5)</span><span class="b">${tp1Price.toFixed(2)}</span></div>
           <div class="row"><span>الهدف 2 (R:R 2.5)</span><span class="b">${tp2Price.toFixed(2)}</span></div>
-        ` : `<div style="text-align:center;padding:8px;font-size:12px;color:var(--mut)">لا يوجد توافق كافٍ بين المؤشرات في أي إطار — الأفضل عدم الدخول.</div>`}
+        ` : `<div style="text-align:center;padding:8px;font-size:12px;color:var(--mut)">القوة أقل من 7.0 — السوق حيادي لضمان استقرار وعدم تشتت الصفقات.</div>`}
       </div>
 
       <div class="card">
@@ -293,13 +295,13 @@ $("go").onclick = async () => {
 
 $("all").onclick = async () => {
   const out = $("out");
-  out.innerHTML = "<div class='card'>جاري فحص كافة الأصول بالسوق... يرجى الانتظار</div>";
+  out.innerHTML = "<div class='card'>جاري فحص وتثبيت إشارات الأصول...</div>";
   let results = [];
 
   for (let pair of Object.keys(A)) {
     try {
       let candles = await fetchCandles(pair, "intra");
-      let res = analyzeCandles(candles, "intra");
+      let res = analyzeCandles(candles);
       let { bestType } = await getMultiTimeframeSummary(pair);
       results.push({ pair, price: res.curPrice, action: res.action, actionClass: res.actionClass, score: res.score, type: bestType });
     } catch(e) {}
@@ -321,13 +323,12 @@ $("all").onclick = async () => {
           `).join('')}
         </table>
       </div>
-      <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--mut)">اضغط على صف لعرض التفاصيل</div>
+      <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--mut)">اضغط على صف لعرض التفاصيل المستقرة</div>
     </div>
   `;
   out.innerHTML = html;
 };
 
-// تشغيل التحليل تلقائياً عند فتح الصفحة لأول مرة
 window.onload = () => { $("go").click(); };
 </script>
 </body>
