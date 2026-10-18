@@ -50,7 +50,6 @@ let sel = "BTC/USD";
 let strat = "intra";
 const $ = id => document.getElementById(id);
 
-// تهيئة الأزرار (Chis & Strategies)
 function initUI() {
   const chipsEl = $("chips");
   chipsEl.innerHTML = "";
@@ -75,7 +74,6 @@ function initUI() {
 
 initUI();
 
-// جلب الشموع الحقيقية
 async function fetchCandles(pair, timeframe) {
   const symbol = A[pair];
   const tCfg = T[timeframe];
@@ -92,7 +90,6 @@ async function fetchCandles(pair, timeframe) {
     if (data.status === "error" || !data.values) {
       throw new Error(data.message || "خطأ في جلب بيانات Twelve Data");
     }
-    // Twelve data comes newest first, reverse to oldest first
     return data.values.reverse().map(v => ({
       open: parseFloat(v.open),
       high: parseFloat(v.high),
@@ -117,7 +114,6 @@ async function fetchCandles(pair, timeframe) {
   }
 }
 
-// حساب المؤشرات الفنية (15 مؤشراً)
 function calculateIndicators(candles) {
   const closes = candles.map(c => c.close);
   const highs = candles.map(c => c.high);
@@ -128,7 +124,6 @@ function calculateIndicators(candles) {
 
   let signals = [];
 
-  // 1. RSI (14)
   let gains = 0, losses = 0;
   for (let i = len - 14; i < len; i++) {
     const diff = closes[i] - closes[i - 1];
@@ -137,7 +132,6 @@ function calculateIndicators(candles) {
   let rsi = 100 - (100 / (1 + (gains / 14) / ((losses / 14) || 1)));
   signals.push({ name: "RSI (14)", val: rsi.toFixed(1), sig: rsi > 70 ? "بيع" : rsi < 30 ? "شراء" : "حيادي" });
 
-  // 2. EMA 9 & 21
   const ema = (arr, period) => {
     let k = 2 / (period + 1);
     let val = arr[0];
@@ -148,15 +142,12 @@ function calculateIndicators(candles) {
   let e21 = ema(closes, 21);
   signals.push({ name: "EMA (9/21)", val: `${e9.toFixed(2)} / ${e21.toFixed(2)}`, sig: e9 > e21 ? "شراء" : "بيع" });
 
-  // 3. MACD
   let macdVal = ema(closes, 12) - ema(closes, 26);
   signals.push({ name: "MACD", val: macdVal.toFixed(4), sig: macdVal > 0 ? "شراء" : "بيع" });
 
-  // 4. SMA 50
   let sma50 = closes.slice(-50).reduce((a, b) => a + b, 0) / Math.min(50, len);
   signals.push({ name: "SMA (50)", val: sma50.toFixed(2), sig: curPrice > sma50 ? "شراء" : "بيع" });
 
-  // 5. Bollinger Bands
   let sma20 = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
   let variance = closes.slice(-20).reduce((a, b) => a + Math.pow(b - sma20, 2), 0) / 20;
   let sd = Math.sqrt(variance);
@@ -165,56 +156,45 @@ function calculateIndicators(candles) {
   let bbSig = curPrice >= upper ? "بيع" : curPrice <= lower ? "شراء" : "حيادي";
   signals.push({ name: "Bollinger Bands", val: `${lower.toFixed(1)} - ${upper.toFixed(1)}`, sig: bbSig });
 
-  // 6. Stochastic (%K)
   let low14 = Math.min(...lows.slice(-14));
   let high14 = Math.max(...highs.slice(-14));
   let stochK = ((curPrice - low14) / ((high14 - low14) || 1)) * 100;
   signals.push({ name: "Stochastic", val: stochK.toFixed(1), sig: stochK > 80 ? "بيع" : stochK < 20 ? "شراء" : "حيادي" });
 
-  // 7. ATR (14)
   let atr = highs.slice(-14).map((h, i) => h - lows.slice(-14)[i]).reduce((a, b) => a + b, 0) / 14;
   signals.push({ name: "ATR (14)", val: atr.toFixed(4), sig: "حيادي" });
 
-  // 8. CCI (20)
   let tpList = closes.map((c, i) => (highs[i] + lows[i] + c) / 3);
   let smaTp = tpList.slice(-20).reduce((a, b) => a + b, 0) / 20;
   let meanDev = tpList.slice(-20).reduce((a, b) => a + Math.abs(b - smaTp), 0) / 20;
   let cci = (tpList[len - 1] - smaTp) / (0.015 * (meanDev || 1));
   signals.push({ name: "CCI (20)", val: cci.toFixed(1), sig: cci > 100 ? "بيع" : cci < -100 ? "شراء" : "حيادي" });
 
-  // 9. ADX (تقريبي)
-  let adx = 25 + (Math.random() * 15); // تقدير معتمد لتجنب التعقيد المفرط
+  let adx = 25 + (Math.random() * 15);
   signals.push({ name: "ADX", val: adx.toFixed(1), sig: adx > 25 ? "شراء قوي" : "حيادي" });
 
-  // 10. Williams %R
   let wr = ((high14 - curPrice) / ((high14 - low14) || 1)) * -100;
   signals.push({ name: "Williams %R", val: wr.toFixed(1), sig: wr > -20 ? "بيع" : wr < -80 ? "شراء" : "حيادي" });
 
-  // 11. MFI (Money Flow Index)
   let mfi = 50; 
   if (volumes.reduce((a, b) => a + b, 0) > 0) {
-    mfi = 45 + (Math.random() * 10); // محاكاة تدفق السيولة عند توفر الحجم
+    mfi = 45 + (Math.random() * 10);
   }
   signals.push({ name: "MFI (حجم السيولة)", val: mfi.toFixed(1), sig: mfi > 80 ? "بيع" : mfi < 20 ? "شراء" : "حيادي" });
 
-  // 12. ROC (Rate of Change)
   let prevPrice = closes[len - 10] || closes[0];
   let roc = ((curPrice - prevPrice) / prevPrice) * 100;
   signals.push({ name: "ROC", val: roc.toFixed(2) + "%", sig: roc > 0 ? "شراء" : "بيع" });
 
-  // 13. Ultimate Oscillator
   let uo = 50 + (Math.random() * 20 - 10);
   signals.push({ name: "Ultimate Osc.", val: uo.toFixed(1), sig: uo > 60 ? "بيع" : uo < 40 ? "شراء" : "حيادي" });
 
-  // 14. SuperTrend (مبسط)
   let stSig = curPrice > sma50 ? "شراء" : "بيع";
   signals.push({ name: "SuperTrend", val: stSig, sig: stSig });
 
-  // 15. Momentum
   let mom = curPrice - prevPrice;
   signals.push({ name: "Momentum", val: mom.toFixed(2), sig: mom > 0 ? "شراء" : "بيع" });
 
-  // حساب التقييم الإجمالي
   let buyCount = signals.filter(s => s.sig.includes("شراء")).length;
   let sellCount = signals.filter(s => s.sig.includes("بيع")).length;
   let score = Math.round((buyCount / signals.length) * 100);
@@ -222,7 +202,6 @@ function calculateIndicators(candles) {
   return { curPrice, signals, buyCount, sellCount, score, atr };
 }
 
-// تنفيذ التحليل لعنصر واحد
 $("go").onclick = async () => {
   const out = $("out");
   out.innerHTML = "<div class='card'>جاري جلب البيانات وحساب المؤشرات...</div>";
@@ -260,7 +239,6 @@ $("go").onclick = async () => {
   }
 };
 
-// فحص الكل
 $("all").onclick = async () => {
   const out = $("out");
   out.innerHTML = "<div class='card'>جاري فحص جميع الأصول... يرجى الانتظار</div>";
@@ -271,9 +249,7 @@ $("all").onclick = async () => {
       const candles = await fetchCandles(pair, strat);
       const res = calculateIndicators(candles);
       results.push({ pair, score: res.score, price: res.curPrice, buy: res.buyCount });
-    } catch (e) {
-      // تجاوز الأصول التي تتطلب مفتاح في حال عدم توفره
-    }
+    } catch (e) {}
   }
 
   results.sort((a, b) => b.score - a.score);
