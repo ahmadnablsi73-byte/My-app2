@@ -95,7 +95,6 @@
         .status-wait { background-color: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
         .status-buy { background-color: rgba(46, 160, 67, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
         .status-sell { background-color: rgba(218, 54, 51, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
-        .status-closed { background-color: rgba(139, 148, 158, 0.2); color: var(--text-secondary); border: 1px solid var(--text-secondary); }
         
         .grid-details {
             display: grid;
@@ -140,17 +139,13 @@
 <div class="container">
     <header>
         <h1>📊 منصة التداول الذكية - استراتيجية ORB</h1>
-        <p>نطاق 15 دقيقة (جلسة نيويورك) • تنفيذ 5 دقائق • رصد السيولة اللحظية</p>
+        <p>الجلسات الرئيسية (طوكيو، لندن، نيويورك) • نطاق 15 دقيقة • إغلاق 5 دقائق للكسر</p>
     </header>
 
-    <div id="marketStatusBanner" class="market-status-banner">السوق مغلق حالياً أو عطلة رسمية (تم إيقاف الجلب حفاظاً على البيانات)</div>
+    <div id="marketStatusBanner" class="market-status-banner">السوق مغلق حالياً (عطلة نهاية الأسبوع)</div>
 
-    <!-- قائمة الرموز والأصول -->
-    <div class="symbols-grid" id="symbolsGrid">
-        <!-- سيتم تعبئتها تلقائياً -->
-    </div>
+    <div class="symbols-grid" id="symbolsGrid"></div>
 
-    <!-- لوحة التحليل والتفاصيل -->
     <div class="dashboard-card" id="dashboardCard">
         <div class="loader" id="loaderText">جاري الاتصال بـ Twelve Data وجلب البيانات الحية...</div>
         <div id="contentBody" style="display: none;">
@@ -178,16 +173,16 @@
                     <div class="detail-value" id="entryPoint" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
                 </div>
                 <div class="detail-item">
-                    <div class="detail-title">وقف الخسارة (قاع شمعة الكسر)</div>
+                    <div class="detail-title">وقف الخسارة</div>
                     <div class="detail-value" id="stopLoss" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
                 </div>
                 <div class="detail-item">
-                    <div class="detail-title">هدف الربح (ضعف المسافة 1:2)</div>
+                    <div class="detail-title">هدف الربح (1:2)</div>
                     <div class="detail-value" id="takeProfit" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
                 </div>
                 <div class="detail-item">
-                    <div class="detail-title">الجلسة المفعلة</div>
-                    <div class="detail-value" id="activeSession">جلسة نيويورك</div>
+                    <div class="detail-title">الجلسة الحالية والعداد</div>
+                    <div class="detail-value" id="activeSession">--</div>
                 </div>
             </div>
         </div>
@@ -197,7 +192,6 @@
 <script>
     const apiKey = 'd58a6ae33e6343dbb8df779aa8df0e08';
     
-    // الأصول المطلوبة (العملات الرئيسية الـ 6 + الذهب + النازداك + النفط + البيتكوين)
     const symbols = [
         { id: 'EUR/USD', name: 'EUR/USD' },
         { id: 'GBP/USD', name: 'GBP/USD' },
@@ -208,22 +202,41 @@
         { id: 'XAU/USD', name: 'الذهب (XAU)' },
         { id: 'IXIC', name: 'النازداك (IXIC)' },
         { id: 'WTI', name: 'النفط (WTI)' },
-        { id: 'BTC/USD', name: 'البيتكوين (BTC)' }
+        { id: 'BTC/USD', name: 'البيتكوين (BTC)', nyOnly: true }
     ];
 
     let currentSymbol = 'EUR/USD';
 
-    // التحقق مما إذا كان السوق مغلقاً (عطلة نهاية الأسبوع السبت والأحد)
     function checkMarketOpen() {
         const now = new Date();
-        const day = now.getUTCDay(); // 0 = الأحد, 6 = السبت
-        const hours = now.getUTCHours();
-
-        // عطلة نهاية الأسبوع (السبت والأحد بالكامل تقريباً)
-        if (day === 6 || day === 0) {
-            return false;
-        }
+        const day = now.getUTCDay();
+        if (day === 6 || day === 0) return false;
         return true;
+    }
+
+    // تحديد الجلسة الحالية بناءً على توقيت UTC
+    function getCurrentSession(isBtc) {
+        const now = new Date();
+        const hour = now.getUTCHours();
+        const minute = now.getUTCMinutes();
+        const totalMinutes = hour * 60 + minute;
+
+        if (isBtc) {
+            // البيتكوين جلسة نيويورك فقط (من 13:30 إلى 20:00 UTC تقريباً)
+            return { name: 'جلسة نيويورك (بيتكوين)', endHour: 20, endMinute: 0 };
+        }
+
+        // توقيت الجلسات الرئيسية (UTC)
+        // طوكيو: 00:00 - 08:00
+        // لندن: 08:00 - 16:00
+        // نيويورك: 13:30 - 21:00
+        if (totalMinutes >= 0 && totalMinutes < 480) {
+            return { name: 'جلسة طوكيو', endHour: 8, endMinute: 0 };
+        } else if (totalMinutes >= 480 && totalMinutes < 960) {
+            return { name: 'جلسة لندن', endHour: 16, endMinute: 0 };
+        } else {
+            return { name: 'جلسة نيويورك', endHour: 21, endMinute: 0 };
+        }
     }
 
     function initUI() {
@@ -244,7 +257,7 @@
 
         if (!checkMarketOpen()) {
             document.getElementById('marketStatusBanner').style.display = 'block';
-            document.getElementById('loaderText').innerText = 'السوق مغلق حالياً. يرجى الانتظار حتى افتتاح الجلسات القادمة.';
+            document.getElementById('loaderText').innerText = 'السوق مغلق حالياً. يرجى الانتظار حتى افتتاحه.';
             return;
         }
 
@@ -256,75 +269,73 @@
         document.getElementById('contentBody').style.display = 'none';
 
         try {
-            // جلب شمعات 15 دقيقة لتحديد الرينج، وشمعات 5 دقائق للتنفيذ
-            const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=15min&outputsize=4&apikey=${apiKey}`);
+            const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=15min&outputsize=10&apikey=${apiKey}`);
             const data15 = await res15.json();
 
-            const res5 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=5min&outputsize=6&apikey=${apiKey}`);
+            const res5 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=5min&outputsize=10&apikey=${apiKey}`);
             const data5 = await res5.json();
 
             if (data15.status === 'error' || data5.status === 'error') {
                 throw new Error(data15.message || data5.message || 'خطأ في جلب بيانات API');
             }
 
-            processORBStrategy(data15.values, data5.values);
+            processORBStrategy(data15.values, data5.values, symbol);
 
         } catch (error) {
             console.error(error);
-            document.getElementById('loaderText').innerText = 'تعذر جلب البيانات الحية حالياً. تأكد من اتصال الإنترنت أو حالة الـ API.';
+            document.getElementById('loaderText').innerText = 'تعذر جلب البيانات الحية حالياً. تأكد من اتصال الإنترنت.';
         }
     }
 
-    function processORBStrategy(candles15, candles5) {
+    function processORBStrategy(candles15, candles5, symbolObj) {
         if (!candles15 || candles15.length === 0 || !candles5 || candles5.length === 0) return;
 
-        // شمعة الافتتاح (15 دقيقة الأولى)
-        const openingCandle = candles15[candles15.length - 1]; 
+        const isBtc = (symbolObj === 'BTC/USD');
+        const session = getCurrentSession(isBtc);
+
+        // شمعة الربع ساعة الأولى لتحديد النطاق (High / Low)
+        const openingCandle = candles15[1] || candles15[0];
         const highRange = parseFloat(openingCandle.high);
         const lowRange = parseFloat(openingCandle.low);
         
+        // شمعة الـ 5 دقائق المغلقة لتنفيذ الاستراتيجية والتحقق من الكسر
+        const latestClosed5m = candles5[1]; 
         const currentPrice = parseFloat(candles5[0].close);
+        const close5m = parseFloat(latestClosed5m.close);
+        const high5m = parseFloat(latestClosed5m.high);
+        const low5m = parseFloat(latestClosed5m.low);
 
-        // حساب مؤشر السيولة وقوة الصفقة بناءً على حجم التغير السعري في فريم 5 دقائق
+        // حساب قوة السيولة
         let volumeScore = 0;
         candles5.slice(0, 3).forEach(c => {
-            const range = Math.abs(parseFloat(c.high) - parseFloat(c.low));
-            volumeScore += range;
+            volumeScore += Math.abs(parseFloat(c.high) - parseFloat(c.low));
         });
-        
-        // قوة الصفقة من 10 تعتمد على السيولة وزخم الحركة
-        let liquidityPower = Math.min(Math.max((volumeScore * 150).toFixed(1), 3.2), 9.6);
+        let liquidityPower = Math.min(Math.max((volumeScore * 200).toFixed(1), 3.5), 9.5);
 
-        let signal = 'انتظار الكسر';
+        let signal = 'بانتظار الكسر';
         let statusClass = 'status-wait';
         let entryText = 'غير متوفر (بانتظار الكسر)';
         let slText = 'غير متوفر (بانتظار الكسر)';
         let tpText = 'غير متوفر (بانتظار الكسر)';
 
-        const latest5m = candles5[0];
-        const close5m = parseFloat(latest5m.close);
-        const low5m = parseFloat(latest5m.low);
-        const high5m = parseFloat(latest5m.high);
-
-        // شروط استراتيجية ORB (اختراق نطاق الافتتاح)
+        // شروط الكسر المعتمدة على إغلاق شمعة الـ 5 دقائق تماماً
         if (close5m > highRange) {
-            // كسر صعودي (شراء)
-            signal = 'شراء (اختراق صعودي)';
+            signal = 'شراء (اختراق صعودي مفعل)';
             statusClass = 'status-buy';
             let entry = close5m;
-            let sl = low5m; // وقف الخسارة قاع شمعة الكسر
+            let sl = low5m; // قاع شمعة الكسر
             let risk = entry - sl;
-            let tp = entry + (risk * 2); // هدف الربح ضعف مسافة وقف الخسارة
+            let tp = entry + (risk * 2);
 
             entryText = entry.toFixed(4);
             slText = sl.toFixed(4);
             tpText = tp.toFixed(4);
-        } else if (close5m < lowRange) {
-            // كسر هبوطي (بيع)
-            signal = 'بيع (اختراق هبوطي)';
+        } 
+        else if (close5m < lowRange) {
+            signal = 'بيع (اختراق هبوطي مفعل)';
             statusClass = 'status-sell';
             let entry = close5m;
-            let sl = high5m; // وقف الخسارة قمة شمعة الكسر
+            let sl = high5m; // قمة شمعة الكسر
             let risk = sl - entry;
             let tp = entry - (risk * 2);
 
@@ -333,7 +344,6 @@
             tpText = tp.toFixed(4);
         }
 
-        // تحديث واجهة المستخدم
         document.getElementById('selectedSymbolTitle').innerText = currentSymbol;
         document.getElementById('currentPrice').innerText = currentPrice.toFixed(4);
         
@@ -348,11 +358,21 @@
         document.getElementById('stopLoss').innerText = slText;
         document.getElementById('takeProfit').innerText = tpText;
 
+        // عداد تنازلي بسيط لنهاية الجلسة
+        const now = new Date();
+        const endSessionTime = new Date();
+        endSessionTime.setUTCHours(session.endHour, session.endMinute, 0, 0);
+        let diffMs = endSessionTime - now;
+        if (diffMs < 0) diffMs = 0;
+        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        document.getElementById('activeSession').innerText = `${session.name} (ينتهي خلال: ${diffHrs} س و ${diffMins} د)`;
+
         document.getElementById('loaderText').style.display = 'none';
         document.getElementById('contentBody').style.display = 'block';
     }
 
-    // التشغيل التلقائي عند تحميل الصفحة
     window.onload = initUI;
 </script>
 
