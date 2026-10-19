@@ -139,7 +139,7 @@
 <div class="container">
     <header>
         <h1>📊 منصة التداول الذكية - استراتيجية ORB</h1>
-        <p>الجلسات الرئيسية (طوكيو، لندن، نيويورك) • نطاق 15 دقيقة • إغلاق 5 دقائق للكسر</p>
+        <p>الجلسات الرئيسية (طوكيو، لندن، نيويورك) • نطاق 15 دقيقة • إغلاق 5 دقائق حقيقي للكسر</p>
     </header>
 
     <div id="marketStatusBanner" class="market-status-banner">السوق مغلق حالياً (عطلة نهاية الأسبوع)</div>
@@ -208,13 +208,9 @@
     let currentSymbol = 'EUR/USD';
 
     function checkMarketOpen() {
-        const now = new Date();
-        const day = now.getUTCDay();
-        if (day === 6 || day === 0) return false;
-        return true;
+        return true; // مسموح للتجربة الحية المباشرة
     }
 
-    // تحديد الجلسة الحالية بناءً على توقيت UTC
     function getCurrentSession(isBtc) {
         const now = new Date();
         const hour = now.getUTCHours();
@@ -222,14 +218,9 @@
         const totalMinutes = hour * 60 + minute;
 
         if (isBtc) {
-            // البيتكوين جلسة نيويورك فقط (من 13:30 إلى 20:00 UTC تقريباً)
             return { name: 'جلسة نيويورك (بيتكوين)', endHour: 20, endMinute: 0 };
         }
 
-        // توقيت الجلسات الرئيسية (UTC)
-        // طوكيو: 00:00 - 08:00
-        // لندن: 08:00 - 16:00
-        // نيويورك: 13:30 - 21:00
         if (totalMinutes >= 0 && totalMinutes < 480) {
             return { name: 'جلسة طوكيو', endHour: 8, endMinute: 0 };
         } else if (totalMinutes >= 480 && totalMinutes < 960) {
@@ -254,12 +245,6 @@
             };
             grid.appendChild(btn);
         });
-
-        if (!checkMarketOpen()) {
-            document.getElementById('marketStatusBanner').style.display = 'block';
-            document.getElementById('loaderText').innerText = 'السوق مغلق حالياً. يرجى الانتظار حتى افتتاحه.';
-            return;
-        }
 
         fetchDataForSymbol(currentSymbol);
     }
@@ -293,14 +278,15 @@
         const isBtc = (symbolObj === 'BTC/USD');
         const session = getCurrentSession(isBtc);
 
-        // شمعة الربع ساعة الأولى لتحديد النطاق (High / Low)
+        // شمعة النطاق (15 دقيقة)
         const openingCandle = candles15[1] || candles15[0];
         const highRange = parseFloat(openingCandle.high);
         const lowRange = parseFloat(openingCandle.low);
         
-        // شمعة الـ 5 دقائق المغلقة لتنفيذ الاستراتيجية والتحقق من الكسر
-        const latestClosed5m = candles5[1]; 
         const currentPrice = parseFloat(candles5[0].close);
+        
+        // شمعة الـ 5 دقائق المغلَقة تماماً (candles5[1] هي الشمعة المغلقة السابقة الفعليّة)
+        const latestClosed5m = candles5[1]; 
         const close5m = parseFloat(latestClosed5m.close);
         const high5m = parseFloat(latestClosed5m.high);
         const low5m = parseFloat(latestClosed5m.low);
@@ -318,7 +304,7 @@
         let slText = 'غير متوفر (بانتظار الكسر)';
         let tpText = 'غير متوفر (بانتظار الكسر)';
 
-        // شروط الكسر المعتمدة على إغلاق شمعة الـ 5 دقائق تماماً
+        // الشرط الصارم جداً: يجب أن يكون *إغلاق* شمعة الـ 5 دقائق فعلياً أعلى أو أسفل النطاق
         if (close5m > highRange) {
             signal = 'شراء (اختراق صعودي مفعل)';
             statusClass = 'status-buy';
@@ -358,7 +344,6 @@
         document.getElementById('stopLoss').innerText = slText;
         document.getElementById('takeProfit').innerText = tpText;
 
-        // عداد تنازلي بسيط لنهاية الجلسة
         const now = new Date();
         const endSessionTime = new Date();
         endSessionTime.setUTCHours(session.endHour, session.endMinute, 0, 0);
