@@ -25,7 +25,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-primary);
-            padding: 20px;
+            padding: 15px;
         }
         .container {
             max-width: 1300px;
@@ -33,16 +33,16 @@
         }
         header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         header h1 {
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             color: var(--text-primary);
             margin-bottom: 5px;
         }
         header p {
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .info-bar {
             display: flex;
@@ -50,10 +50,10 @@
             align-items: center;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            padding: 12px 20px;
+            padding: 12px 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.95rem;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -69,11 +69,12 @@
             width: 100%;
             border-collapse: collapse;
             text-align: right;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         th, td {
-            padding: 12px 15px;
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
         }
         th {
             color: var(--text-secondary);
@@ -83,9 +84,9 @@
             background-color: rgba(255, 255, 255, 0.02);
         }
         .badge {
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             display: inline-block;
         }
@@ -95,18 +96,19 @@
         
         .loader {
             text-align: center;
-            padding: 40px;
+            padding: 30px;
             color: var(--text-secondary);
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
         .refresh-btn {
             background-color: var(--accent-blue);
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 0.85rem;
         }
         .refresh-btn:hover {
             opacity: 0.9;
@@ -118,9 +120,198 @@
 <div class="container">
     <header>
         <h1>📊 لوحة صفقات ORB الذكية</h1>
-        <p>العملات الستة الرئيسية + الذهب والبتكوين والنازداك والنفط • تحديث منضبط حسب مواعيد الجلسات</p>
+        <p>العملات الرئيسية + الذهب والبتكوين والنازداك والنفط</p>
     </header>
 
     <div class="info-bar">
-        <div>الجلسة المفعلة: <span id="currentSessionLabel" style="color: var(--accent-blue); font-weight: bold;">--</span></div>
-        <div>حالة التوقيت: <span id="timeStatus
+        <div>الجلسة: <span id="currentSessionLabel" style="color: var(--accent-blue); font-weight: bold;">جاري التحقق...</span></div>
+        <div>الحالة: <span id="timeStatus" style="color: var(--accent-yellow); font-weight: bold;">قيد التشغيل</span></div>
+        <button class="refresh-btn" onclick="fetchAllData()">تحديث مباشر</button>
+    </div>
+
+    <div class="table-container">
+        <div id="loaderText" class="loader">جاري الاتصال بالسوق وجلب البيانات...</div>
+        <table id="signalsTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>الأصل</th>
+                    <th>السعر</th>
+                    <th>نطاق ORB</th>
+                    <th>الدخول</th>
+                    <th>وقف الخسارة</th>
+                    <th>الهدف (1:2)</th>
+                    <th>التقييم</th>
+                    <th>القرار</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- تعبئة تلقائية -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const apiKey = 'd58a6ae33e6343dbb8df779aa8df0e08';
+    
+    const symbols = [
+        { id: 'EUR/USD', name: 'EUR/USD' },
+        { id: 'GBP/USD', name: 'GBP/USD' },
+        { id: 'USD/JPY', name: 'USD/JPY' },
+        { id: 'AUD/USD', name: 'AUD/USD' },
+        { id: 'USD/CHF', name: 'USD/CHF' },
+        { id: 'USD/CAD', name: 'USD/CAD' },
+        { id: 'XAU/USD', name: 'الذهب (XAU)' },
+        { id: 'BTC/USD', name: 'البتكوين (BTC)' },
+        { id: 'IXIC', name: 'النازداك (IXIC)' },
+        { id: 'BRENT', name: 'النفط (Brent)' }
+    ];
+
+    function getAmmanTime() {
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        return new Date(utc + (3 * 3600000)); // توقيت عمان UTC+3
+    }
+
+    async function fetchAllData() {
+        const loader = document.getElementById('loaderText');
+        const table = document.getElementById('signalsTable');
+        
+        loader.style.display = 'block';
+        loader.innerText = 'جاري تحليل الأسواق وسحب البيانات...';
+        table.style.display = 'none';
+
+        const t = getAmmanTime();
+        const h = t.getHours();
+        const m = t.getMinutes();
+        const totalMins = h * 60 + m;
+
+        document.getElementById('currentSessionLabel').innerText = (totalMins >= 600 && totalMins < 960) ? 'جلسة لندن' : 'جلسة نيويورك / عام';
+        document.getElementById('timeStatus').innerText = 'متصل وجاهز';
+
+        let results = [];
+
+        for (let s of symbols) {
+            try {
+                const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=15min&outputsize=3&apikey=${apiKey}`);
+                const data15 = await res15.json();
+
+                const res5 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=5min&outputsize=5&apikey=${apiKey}`);
+                const data5 = await res5.json();
+
+                if (!data15.values || !data5.values) continue;
+
+                const candles15 = data15.values;
+                const candles5 = data5.values;
+
+                const openingCandle = candles15[1] || candles15[0];
+                const highRange = parseFloat(openingCandle.high);
+                const lowRange = parseFloat(openingCandle.low);
+                const rangeSize = highRange - lowRange;
+
+                const currentPrice = parseFloat(candles5[0].close);
+                const closed5m = candles5[1]; 
+                const close5m = parseFloat(closed5m.close);
+
+                let momentumScore = 0;
+                candles5.slice(0, 3).forEach(c => {
+                    momentumScore += Math.abs(parseFloat(c.high) - parseFloat(c.low));
+                });
+                let score = Math.min(Math.max((momentumScore * 200).toFixed(1), 4.0), 9.8);
+
+                let signalType = 'WAIT';
+                let entry = 0, sl = 0, tp = 0;
+
+                if (close5m > highRange) {
+                    signalType = 'BUY';
+                    entry = close5m;
+                    let slDistance = rangeSize > (currentPrice * 0.002) ? (rangeSize / 3) : (rangeSize / 2);
+                    sl = entry - slDistance;
+                    tp = entry + (slDistance * 2);
+                } else if (close5m < lowRange) {
+                    signalType = 'SELL';
+                    entry = close5m;
+                    let slDistance = rangeSize > (currentPrice * 0.002) ? (rangeSize / 3) : (rangeSize / 2);
+                    sl = entry + slDistance;
+                    tp = entry - (slDistance * 2);
+                }
+
+                results.push({
+                    name: s.name,
+                    price: currentPrice,
+                    high: highRange,
+                    low: lowRange,
+                    signal: signalType,
+                    entry: entry,
+                    sl: sl,
+                    tp: tp,
+                    score: parseFloat(score)
+                });
+
+            } catch (err) {
+                console.error("Error with symbol " + s.id, err);
+            }
+        }
+
+        renderTable(results);
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+            document.getElementById('loaderText').innerText = 'تعذر جلب البيانات، يرجى المحاولة لاحقاً أو الضغط على تحديث.';
+            return;
+        }
+
+        data.forEach(item => {
+            let tr = document.createElement('tr');
+            let signalBadge = '';
+            let actionDecision = '';
+
+            if (item.signal === 'BUY') {
+                if (item.score >= 7.0) {
+                    signalBadge = `<span class="badge badge-buy">شراء</span>`;
+                    actionDecision = `<span style="color: var(--accent-green); font-weight: bold;">✅ دخول مفعل</span>`;
+                } else {
+                    signalBadge = `<span class="badge badge-wait">شراء ضعيف</span>`;
+                    actionDecision = `<span style="color: var(--accent-yellow);">❌ تخطي (< 7)</span>`;
+                }
+            } else if (item.signal === 'SELL') {
+                if (item.score >= 7.0) {
+                    signalBadge = `<span class="badge badge-sell">بيع</span>`;
+                    actionDecision = `<span style="color: var(--accent-red); font-weight: bold;">✅ دخول مفعل</span>`;
+                } else {
+                    signalBadge = `<span class="badge badge-wait">بيع ضعيف</span>`;
+                    actionDecision = `<span style="color: var(--accent-yellow);">❌ تخطي (< 7)</span>`;
+                }
+            } else {
+                signalBadge = `<span class="badge badge-wait">انتظار</span>`;
+                actionDecision = `<span style="color: var(--text-secondary);">⏳ بانتظار الكسر</span>`;
+            }
+
+            tr.innerHTML = `
+                <td style="font-weight: bold;">${item.name}</td>
+                <td>${item.price.toFixed(4)}</td>
+                <td style="font-size: 0.8rem; color: var(--text-secondary);">H: ${item.high.toFixed(4)}<br>L: ${item.low.toFixed(4)}</td>
+                <td>${signalBadge}<br><span style="font-size: 0.75rem;">${item.signal !== 'WAIT' ? item.entry.toFixed(4) : '--'}</span></td>
+                <td style="color: var(--accent-red);">${item.signal !== 'WAIT' ? item.sl.toFixed(4) : '--'}</td>
+                <td style="color: var(--accent-green);">${item.signal !== 'WAIT' ? item.tp.toFixed(4) : '--'}</td>
+                <td style="font-weight: bold; ${item.score >= 7 ? 'color: var(--accent-green);' : 'color: var(--accent-yellow);'}">${item.score}/10</td>
+                <td>${actionDecision}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('loaderText').style.display = 'none';
+        document.getElementById('signalsTable').style.display = 'table';
+    }
+
+    window.onload = () => {
+        fetchAllData();
+    };
+</script>
+
+</body>
+</html>
