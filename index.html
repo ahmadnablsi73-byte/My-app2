@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة التداول الكمي المتقدمة - عرض جميع الأصول</title>
+    <title>منصة التداول الكمي المتقدمة (تثبيت الصفقات الذكي)</title>
     <style>
         :root {
             --bg-color: #0d1117;
@@ -121,18 +121,18 @@
 
 <div class="container">
     <header>
-        <h1>📊 لوحة التداول الكمي الشاملة (عرض جميع الأصول)</h1>
-        <p>الازواج الرئيسية الستة + الذهب، النفط، النازداك، والبيتكوين | تحليل فريم 5m و 1h</p>
+        <h1>📊 لوحة التداول الكمي المتقدمة (نظام تثبيت الصفقات)</h1>
+        <p>الازواج الرئيسية الستة + الذهب، النفط، النازداك، والبيتكوين | صفقات مثبتة حتى انعكاس المؤشرات</p>
     </header>
 
     <div class="info-bar">
-        <div>النظام: <span style="color: var(--accent-blue); font-weight: bold;">عرض كافة الأصول (الشرط الصارم $\ge$ 7.5 للتوصيات)</span></div>
+        <div>النظام: <span style="color: var(--accent-blue); font-weight: bold;">حفظ وثبات الصفقات (LocalStorage Active)</span></div>
         <div>الحالة: <span id="timeStatus" style="color: var(--accent-green); font-weight: bold;">متصل وجاهز</span></div>
         <button class="refresh-btn" onclick="fetchAllData()">تحديث التحليلات الآن</button>
     </div>
 
     <div class="table-container">
-        <div id="loaderText" class="loader">جاري جلب بيانات وعرض جميع الأصول الـ 10 ...</div>
+        <div id="loaderText" class="loader">جاري مزامنة وتحليل الأسواق مع الحفاظ على الصفقات النشطة ...</div>
         <table id="signalsTable" style="display: none;">
             <thead>
                 <tr>
@@ -157,7 +157,6 @@
 <script>
     const apiKey = 'd58a6ae33e6343dbb8df779aa8df0e08';
     
-    // الأصول الـ 10 المطلوبة (الستة الرئيسية + الذهب + النفط + النازداك + البيتكوين)
     const symbols = [
         { id: 'EUR/USD', name: 'EUR/USD', decimals: 4, atr: 0.0035 },
         { id: 'GBP/USD', name: 'GBP/USD', decimals: 4, atr: 0.0045 },
@@ -176,8 +175,11 @@
         const table = document.getElementById('signalsTable');
         
         loader.style.display = 'block';
-        loader.innerText = 'جاري تحليل مؤشرات جميع الأصول على فريمي 5m و 1h ...';
+        loader.innerText = 'جاري تحديث الأسعار والمؤشرات للأسواق ...';
         table.style.display = 'none';
+
+        // استرجاع الصفقات المثبتة مسبقاً من الذاكرة المحلية
+        let savedTrades = JSON.parse(localStorage.getItem('quant_locked_trades') || '{}');
 
         const promises = symbols.map(async (s) => {
             try {
@@ -189,17 +191,35 @@
                 const data5m = await res5m.json();
                 const data1h = await res1h.json();
 
-                if (!data5m.values || !data1h.values) return null;
+                if (!data5m.values || !data1h.values) {
+                    // في حال فشل الاتصال المؤقت، نعرض البيانات المثبتة إن وجدت لضمان عدم اختفائها
+                    return savedTrades[s.id] || {
+                        name: s.name, price: 0, decimals: s.decimals, score5m: 5.0, score1h: 5.0,
+                        tradeType: 'ترقب السوق', decisionBadge: '<span class="badge badge-neutral">حيادي</span>',
+                        entry: '-', sl: '-', tp: '-'
+                    };
+                }
 
                 const candles5m = data5m.values;
                 const candles1h = data1h.values;
                 const currentPrice = parseFloat(candles5m[0].close);
 
-                let score5m = parseFloat((Math.random() * 8 + 5).toFixed(1)); // قوة بين 5 و 13
-                let score1h = parseFloat((Math.random() * 8 + 5).toFixed(1)); // قوة بين 5 و 13
+                let positiveMoves5m = 0;
+                for (let i = 0; i < 10; i++) {
+                    if (parseFloat(candles5m[i].close) > parseFloat(candles5m[i+1]?.close || candles5m[i].close)) positiveMoves5m++;
+                }
+                let score5m = parseFloat(( (positiveMoves5m / 10) * 10 + 4.5 ).toFixed(1));
+                if (score5m > 15) score5m = 15.0;
 
-                let dir5m = parseFloat(candles5m[0].close) >= parseFloat(candles5m[4].close) ? 'BUY' : 'SELL';
-                let dir1h = parseFloat(candles1h[0].close) >= parseFloat(candles1h[4].close) ? 'BUY' : 'SELL';
+                let positiveMoves1h = 0;
+                for (let i = 0; i < 10; i++) {
+                    if (parseFloat(candles1h[i].close) > parseFloat(candles1h[i+1]?.close || candles1h[i].close)) positiveMoves1h++;
+                }
+                let score1h = parseFloat(( (positiveMoves1h / 10) * 10 + 4.5 ).toFixed(1));
+                if (score1h > 15) score1h = 15.0;
+
+                let dir5m = parseFloat(candles5m[0].close) >= parseFloat(candles5m[candles5m.length - 1].close) ? 'BUY' : 'SELL';
+                let dir1h = parseFloat(candles1h[0].close) >= parseFloat(candles1h[candles1h.length - 1].close) ? 'BUY' : 'SELL';
 
                 let finalSignal = 'NEUTRAL';
                 let tradeType = '<span style="color: var(--text-secondary);">ترقب السوق</span>';
@@ -208,7 +228,7 @@
                 let tp = '-';
                 let decisionBadge = '<span class="badge badge-neutral">حيادي (تحت 7.5)</span>';
 
-                // التحقق من شرط القوة الصارم (أعلى من أو يساوي 7.5)
+                // تحقق من الشروط الجديدة
                 if (score5m >= 7.5 && score1h >= 7.5 && dir5m === dir1h) {
                     finalSignal = dir5m;
                     tradeType = '🚀 إنترداي + سكالبينج';
@@ -219,6 +239,8 @@
                     finalSignal = dir1h;
                     tradeType = '📅 إنترداي (Intraday)';
                 }
+
+                let currentTradeData = null;
 
                 if (finalSignal !== 'NEUTRAL') {
                     const isBuy = finalSignal === 'BUY';
@@ -231,14 +253,40 @@
 
                     if (isBuy) {
                         sl = (currentPrice - riskDistance).toFixed(s.decimals);
-                        tp = (currentPrice + (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة 1:2 تماماً
+                        tp = (currentPrice + (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة 1:2
                     } else {
                         sl = (currentPrice + riskDistance).toFixed(s.decimals);
-                        tp = (currentPrice - (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة 1:2 تماماً
+                        tp = (currentPrice - (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة 1:2
+                    }
+
+                    currentTradeData = {
+                        name: s.name, price: currentPrice, decimals: s.decimals,
+                        score5m, score1h, tradeType, decisionBadge, entry, sl, tp, signal: finalSignal
+                    };
+                    
+                    // تثبيت الصفقة في الذاكرة المحلية
+                    savedTrades[s.id] = currentTradeData;
+                } else {
+                    // إذا تحولت الحالة إلى حيادية، هل نتخلص من الصفقة المثبتة أم نبقيها حتى يتغير الاتجاه؟
+                    // الشرط: "وثبت الصفقات حتى يتم ظهور مؤشرات تغيير من حالات الصفقه"
+                    if (savedTrades[s.id]) {
+                        // تحقق مما إذا انعكس الاتجاه تماماً (مثلاً كانت شراء وأصبحت المؤشرات تدعم البيع بقوة)
+                        const oldSignal = savedTrades[s.id].signal;
+                        if ((oldSignal === 'BUY' && dir5m === 'SELL' && score5m >= 7.5) || 
+                            (oldSignal === 'SELL' && dir5m === 'BUY' && score5m >= 7.5)) {
+                            // حدث انعكاس حقيقي -> نمسح الصفقة القديمة ونتركها حيادية
+                            delete savedTrades[s.id];
+                        } else {
+                            // لم يحدث انعكاس كامل، نبقي الصفقة المثبتة كما هي لحماية استمرارتها
+                            return savedTrades[s.id];
+                        }
                     }
                 }
 
-                return {
+                // حفظ التحديثات في التخزين المحلي
+                localStorage.setItem('quant_locked_trades', JSON.stringify(savedTrades));
+
+                return currentTradeData || {
                     name: s.name,
                     price: currentPrice,
                     decimals: s.decimals,
@@ -252,7 +300,11 @@
                 };
             } catch (err) {
                 console.error("Error with " + s.id, err);
-                return null;
+                return savedTrades[s.id] || {
+                    name: s.name, price: 0, decimals: s.decimals, score5m: 5.0, score1h: 5.0,
+                    tradeType: 'ترقب السوق', decisionBadge: '<span class="badge badge-neutral">حيادي</span>',
+                    entry: '-', sl: '-', tp: '-'
+                };
             }
         });
 
@@ -273,7 +325,7 @@
             let tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-weight: bold;">${item.name}</td>
-                <td class="price">${item.price.toFixed(item.decimals)}</td>
+                <td class="price">${typeof item.price === 'number' ? item.price.toFixed(item.decimals) : item.price}</td>
                 <td style="font-weight: bold; color: ${item.score5m >= 7.5 ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${item.score5m} / 15</td>
                 <td style="font-weight: bold; color: ${item.score1h >= 7.5 ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${item.score1h} / 15</td>
                 <td><span class="badge badge-type">${item.tradeType}</span></td>
