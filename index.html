@@ -130,7 +130,7 @@
     </div>
 
     <div class="table-container">
-        <div id="loaderText" class="loader">جاري الاتصال بالسوق وجلب البيانات...</div>
+        <div id="loaderText" class="loader">جاري جلب جميع الأسواق دفعة واحدة...</div>
         <table id="signalsTable" style="display: none;">
             <thead>
                 <tr>
@@ -170,7 +170,7 @@
     function getAmmanTime() {
         const now = new Date();
         const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        return new Date(utc + (3 * 3600000)); // توقيت عمان UTC+3
+        return new Date(utc + (3 * 3600000));
     }
 
     async function fetchAllData() {
@@ -178,7 +178,7 @@
         const table = document.getElementById('signalsTable');
         
         loader.style.display = 'block';
-        loader.innerText = 'جاري تحليل الأسواق وسحب البيانات...';
+        loader.innerText = 'جاري جلب بيانات جميع الأصول الـ 10 ...';
         table.style.display = 'none';
 
         const t = getAmmanTime();
@@ -189,17 +189,18 @@
         document.getElementById('currentSessionLabel').innerText = (totalMins >= 600 && totalMins < 960) ? 'جلسة لندن' : 'جلسة نيويورك / عام';
         document.getElementById('timeStatus').innerText = 'متصل وجاهز';
 
-        let results = [];
-
-        for (let s of symbols) {
+        // جلب كل الأصول دفعة واحدة باستخدام Promise.all لضمان عدم توقف الطلبات
+        const promises = symbols.map(async (s) => {
             try {
-                const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=15min&outputsize=3&apikey=${apiKey}`);
-                const data15 = await res15.json();
+                const [res15, res5] = await Promise.all([
+                    fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=15min&outputsize=3&apikey=${apiKey}`),
+                    fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=5min&outputsize=5&apikey=${apiKey}`)
+                ]);
 
-                const res5 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=5min&outputsize=5&apikey=${apiKey}`);
+                const data15 = await res15.json();
                 const data5 = await res5.json();
 
-                if (!data15.values || !data5.values) continue;
+                if (!data15.values || !data5.values) return null;
 
                 const candles15 = data15.values;
                 const candles5 = data5.values;
@@ -236,7 +237,7 @@
                     tp = entry - (slDistance * 2);
                 }
 
-                results.push({
+                return {
                     name: s.name,
                     price: currentPrice,
                     high: highRange,
@@ -246,13 +247,14 @@
                     sl: sl,
                     tp: tp,
                     score: parseFloat(score)
-                });
-
+                };
             } catch (err) {
                 console.error("Error with symbol " + s.id, err);
+                return null;
             }
-        }
+        });
 
+        const results = (await Promise.all(promises)).filter(item => item !== null);
         renderTable(results);
     }
 
