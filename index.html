@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة التداول الذكية - استراتيجية ORB</title>
+    <title>منصة التداول الذكية - استراتيجية ORB المتقدمة</title>
     <style>
         :root {
             --bg-color: #0d1117;
@@ -28,7 +28,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
         }
         header {
@@ -36,7 +36,7 @@
             margin-bottom: 25px;
         }
         header h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: var(--text-primary);
             margin-bottom: 5px;
         }
@@ -44,93 +44,70 @@
             color: var(--text-secondary);
             font-size: 0.9rem;
         }
-        .symbols-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .symbol-btn {
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 10px;
+            padding: 12px 20px;
             border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: bold;
-            transition: 0.2s;
-            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
         }
-        .symbol-btn:hover, .symbol-btn.active {
-            background-color: var(--accent-blue);
-            color: #fff;
-            border-color: var(--accent-blue);
-        }
-        .dashboard-card {
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .main-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-        }
-        .price-display {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-        .status-badge {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-        .status-wait { background-color: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
-        .status-buy { background-color: rgba(46, 160, 67, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .status-sell { background-color: rgba(218, 54, 51, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
-        
-        .grid-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        .detail-item {
-            background: rgba(255,255,255,0.02);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        .detail-title {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            margin-bottom: 5px;
-        }
-        .detail-value {
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-        .market-status-banner {
-            text-align: center;
             padding: 10px;
-            background: rgba(218, 54, 51, 0.1);
-            color: var(--accent-red);
-            border: 1px solid var(--accent-red);
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: bold;
-            display: none;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .badge-buy { background-color: rgba(46, 160, 67, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .badge-sell { background-color: rgba(218, 54, 51, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        .badge-wait { background-color: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+        .badge-skip { background-color: rgba(139, 148, 158, 0.2); color: var(--text-secondary); border: 1px solid var(--text-secondary); }
+        
         .loader {
             text-align: center;
-            padding: 20px;
+            padding: 40px;
             color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        .refresh-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .refresh-btn:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -138,54 +115,35 @@
 
 <div class="container">
     <header>
-        <h1>📊 منصة التداول الذكية - استراتيجية ORB</h1>
-        <p>الجلسات الرئيسية (طوكيو، لندن، نيويورك) • نطاق 15 دقيقة • إغلاق 5 دقائق حقيقي للكسر</p>
+        <h1>📊 لوحة صفقات ORB الذكية (تحديث وتثبيت تلقائي)</h1>
+        <p>نطاق 15 دقيقة • إغلاق 5 دقائق حقيقي • فلتر زخم وسيولة • وقف خسارة علمي وهدف 1:2</p>
     </header>
 
-    <div id="marketStatusBanner" class="market-status-banner">السوق مغلق حالياً (عطلة نهاية الأسبوع)</div>
+    <div class="info-bar">
+        <div>الجلسة المفعلة حالياً: <span id="currentSessionLabel" style="color: var(--accent-blue); font-weight: bold;">--</span></div>
+        <div>آخر تثبيت للأسعار: <span id="lastLockTime" style="color: var(--text-secondary);">--</span></div>
+        <button class="refresh-btn" onclick="manualRefresh()">تحديث يدوي الآن</button>
+    </div>
 
-    <div class="symbols-grid" id="symbolsGrid"></div>
-
-    <div class="dashboard-card" id="dashboardCard">
-        <div class="loader" id="loaderText">جاري الاتصال بـ Twelve Data وجلب البيانات الحية...</div>
-        <div id="contentBody" style="display: none;">
-            <div class="main-info">
-                <div>
-                    <h3 id="selectedSymbolTitle" style="color: var(--text-secondary); font-size: 0.9rem;">EUR/USD</h3>
-                    <div class="price-display" id="currentPrice">--</div>
-                </div>
-                <div>
-                    <span class="status-badge status-wait" id="signalStatus">بانتظار الكسر</span>
-                </div>
-            </div>
-
-            <div class="grid-details">
-                <div class="detail-item">
-                    <div class="detail-title">قوة السيولة (من 10)</div>
-                    <div class="detail-value" id="liquidityPower">--</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-title">نطاق الافتتاح (15m High / Low)</div>
-                    <div class="detail-value" id="orbRange" style="font-size: 0.95rem;">--</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-title">نقطة الدخول</div>
-                    <div class="detail-value" id="entryPoint" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-title">وقف الخسارة</div>
-                    <div class="detail-value" id="stopLoss" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-title">هدف الربح (1:2)</div>
-                    <div class="detail-value" id="takeProfit" style="color: var(--text-secondary);">غير متوفر (بانتظار الكسر)</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-title">الجلسة الحالية والعداد</div>
-                    <div class="detail-value" id="activeSession">--</div>
-                </div>
-            </div>
-        </div>
+    <div class="table-container">
+        <div id="loaderText" class="loader">جاري فحص الأسواق وجلب بيانات Twelve Data وتحليل الزخم...</div>
+        <table id="signalsTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>الأصل المالي</th>
+                    <th>السعر الحالي</th>
+                    <th>نطاق ORB (High / Low)</th>
+                    <th>الاتجاه ونقطة الدخول</th>
+                    <th>وقف الخسارة (SL)</th>
+                    <th>الهدف (TP 1:2)</th>
+                    <th>التقييم (من 10)</th>
+                    <th>قرار الصفقة</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- يتم تعبئتها برمجياً -->
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -202,163 +160,194 @@
         { id: 'XAU/USD', name: 'الذهب (XAU)' },
         { id: 'IXIC', name: 'النازداك (IXIC)' },
         { id: 'WTI', name: 'النفط (WTI)' },
-        { id: 'BTC/USD', name: 'البيتكوين (BTC)', nyOnly: true }
+        { id: 'BTC/USD', name: 'البيتكوين (BTC)' }
     ];
 
-    let currentSymbol = 'EUR/USD';
+    let lockedData = null;
+    let lastLockTimestamp = '';
 
-    function checkMarketOpen() {
-        return true; // مسموح للتجربة الحية المباشرة
-    }
-
-    function getCurrentSession(isBtc) {
+    function getAmmanTime() {
         const now = new Date();
-        const hour = now.getUTCHours();
-        const minute = now.getUTCMinutes();
-        const totalMinutes = hour * 60 + minute;
+        // توقيت الأردن المحلي (UTC+3)
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        return new Date(utc + (3 * 3600000));
+    }
 
-        if (isBtc) {
-            return { name: 'جلسة نيويورك (بيتكوين)', endHour: 20, endMinute: 0 };
-        }
+    function checkActiveSession() {
+        const ammanTime = getAmmanTime();
+        const hour = ammanTime.getHours();
+        const min = ammanTime.getMinutes();
+        const totalMins = hour * 60 + min;
 
-        if (totalMinutes >= 0 && totalMinutes < 480) {
-            return { name: 'جلسة طوكيو', endHour: 8, endMinute: 0 };
-        } else if (totalMinutes >= 480 && totalMinutes < 960) {
-            return { name: 'جلسة لندن', endHour: 16, endMinute: 0 };
+        // لندن تفتح 10:00 (تتثبت 10:15) | نيويورك تفتح 16:30 (تتثبت 16:45)
+        if (totalMins >= 615 && totalMins < 1005) {
+            return { name: 'جلسة نيويورك (عصراً)', sessionKey: 'NY' };
         } else {
-            return { name: 'جلسة نيويورك', endHour: 21, endMinute: 0 };
+            return { name: 'جلسة لندن (صباحاً)', sessionKey: 'LONDON' };
         }
     }
 
-    function initUI() {
-        const grid = document.getElementById('symbolsGrid');
-        grid.innerHTML = '';
-        symbols.forEach(s => {
-            const btn = document.createElement('button');
-            btn.className = `symbol-btn ${s.id === currentSymbol ? 'active' : ''}`;
-            btn.innerText = s.name;
-            btn.onclick = () => {
-                document.querySelectorAll('.symbol-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentSymbol = s.id;
-                fetchDataForSymbol(currentSymbol);
-            };
-            grid.appendChild(btn);
-        });
+    async function fetchAllData() {
+        const sessionInfo = checkActiveSession();
+        document.getElementById('currentSessionLabel').innerText = sessionInfo.name;
+        
+        document.getElementById('loaderText').style.display = 'block';
+        document.getElementById('signalsTable').style.display = 'none';
 
-        fetchDataForSymbol(currentSymbol);
+        let results = [];
+
+        for (let s of symbols) {
+            try {
+                const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=15min&outputsize=5&apikey=${apiKey}`);
+                const data15 = await res15.json();
+
+                const res5 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=5min&outputsize=5&apikey=${apiKey}`);
+                const data5 = await res5.json();
+
+                if (data15.status === 'error' || data5.status === 'error' || !data15.values || !data5.values) {
+                    continue;
+                }
+
+                const candles15 = data15.values;
+                const candles5 = data5.values;
+
+                // شمعة النطاق (15 دقيقة الأولى)
+                const openingCandle = candles15[1] || candles15[0];
+                const highRange = parseFloat(openingCandle.high);
+                const lowRange = parseFloat(openingCandle.low);
+                const rangeSize = highRange - lowRange;
+
+                const currentPrice = parseFloat(candles5[0].close);
+                const closed5m = candles5[1]; // شمعة الـ 5 دقائق المغلقة تماماً
+                const close5m = parseFloat(closed5m.close);
+                const high5m = parseFloat(closed5m.high);
+                const low5m = parseFloat(closed5m.low);
+
+                // حساب مؤشر السيولة والزخم (بناءً على حركة الشموع وحجمها)
+                let momentumScore = 0;
+                candles5.slice(0, 3).forEach(c => {
+                    momentumScore += Math.abs(parseFloat(c.high) - parseFloat(c.low));
+                });
+                let score = Math.min(Math.max((momentumScore * 250).toFixed(1), 4.0), 9.8);
+
+                let signalType = 'WAIT'; // بانتظار الكسر
+                let entry = 0, sl = 0, tp = 0;
+
+                // شروط الإغلاق خارج النطاق
+                if (close5m > highRange) {
+                    signalType = 'BUY';
+                    entry = close5m;
+                    // SL: ثلث الرينج إذا كان كبير، أو نصف الرينج إذا كان صغير
+                    let slDistance = rangeSize > (currentPrice * 0.002) ? (rangeSize / 3) : (rangeSize / 2);
+                    sl = entry - slDistance;
+                    tp = entry + (slDistance * 2);
+                } else if (close5m < lowRange) {
+                    signalType = 'SELL';
+                    entry = close5m;
+                    let slDistance = rangeSize > (currentPrice * 0.002) ? (rangeSize / 3) : (rangeSize / 2);
+                    sl = entry + slDistance;
+                    tp = entry - (slDistance * 2);
+                }
+
+                results.push({
+                    name: s.name,
+                    price: currentPrice,
+                    high: highRange,
+                    low: lowRange,
+                    signal: signalType,
+                    entry: entry,
+                    sl: sl,
+                    tp: tp,
+                    score: parseFloat(score)
+                });
+
+            } catch (e) {
+                console.error(`Error fetching ${s.id}:`, e);
+            }
+        }
+
+        lockedData = results;
+        const now = getAmmanTime();
+        lastLockTimestamp = now.toLocaleTimeString('ar-JO', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('lastLockTime').innerText = lastLockTimestamp;
+
+        renderTable(lockedData);
     }
 
-    async function fetchDataForSymbol(symbol) {
-        document.getElementById('loaderText').style.display = 'block';
-        document.getElementById('contentBody').style.display = 'none';
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
 
-        try {
-            const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=15min&outputsize=10&apikey=${apiKey}`);
-            const data15 = await res15.json();
+        data.forEach(item => {
+            let tr = document.createElement('tr');
+            
+            let signalBadge = '';
+            let actionDecision = '';
 
-            const res5 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=5min&outputsize=10&apikey=${apiKey}`);
-            const data5 = await res5.json();
-
-            if (data15.status === 'error' || data5.status === 'error') {
-                throw new Error(data15.message || data5.message || 'خطأ في جلب بيانات API');
+            if (item.signal === 'BUY') {
+                if (item.score >= 7.0) {
+                    signalBadge = `<span class="badge badge-buy">شراء (Buy)</span>`;
+                    actionDecision = `<span style="color: var(--accent-green); font-weight: bold;">✅ صفقة ممتازة (الدخول مفعل)</span>`;
+                } else {
+                    signalBadge = `<span class="badge badge-wait">شراء ضعيف</span>`;
+                    actionDecision = `<span style="color: var(--accent-yellow);">❌ تخطي الصفقة (زخم ضعيف أقل من 7)</span>`;
+                }
+            } else if (item.signal === 'SELL') {
+                if (item.score >= 7.0) {
+                    signalBadge = `<span class="badge badge-sell">بيع (Sell)</span>`;
+                    actionDecision = `<span style="color: var(--accent-red); font-weight: bold;">✅ صفقة ممتازة (الدخول مفعل)</span>`;
+                } else {
+                    signalBadge = `<span class="badge badge-wait">بيع ضعيف</span>`;
+                    actionDecision = `<span style="color: var(--accent-yellow);">❌ تخطي الصفقة (زخم ضعيف أقل من 7)</span>`;
+                }
+            } else {
+                signalBadge = `<span class="badge badge-wait">بانتظار الكسر</span>`;
+                actionDecision = `<span style="color: var(--text-secondary);">⏳ لم يكتمل الإغلاق الخارجي</span>`;
             }
 
-            processORBStrategy(data15.values, data5.values, symbol);
-
-        } catch (error) {
-            console.error(error);
-            document.getElementById('loaderText').innerText = 'تعذر جلب البيانات الحية حالياً. تأكد من اتصال الإنترنت.';
-        }
-    }
-
-    function processORBStrategy(candles15, candles5, symbolObj) {
-        if (!candles15 || candles15.length === 0 || !candles5 || candles5.length === 0) return;
-
-        const isBtc = (symbolObj === 'BTC/USD');
-        const session = getCurrentSession(isBtc);
-
-        // شمعة النطاق (15 دقيقة)
-        const openingCandle = candles15[1] || candles15[0];
-        const highRange = parseFloat(openingCandle.high);
-        const lowRange = parseFloat(openingCandle.low);
-        
-        const currentPrice = parseFloat(candles5[0].close);
-        
-        // شمعة الـ 5 دقائق المغلَقة تماماً (candles5[1] هي الشمعة المغلقة السابقة الفعليّة)
-        const latestClosed5m = candles5[1]; 
-        const close5m = parseFloat(latestClosed5m.close);
-        const high5m = parseFloat(latestClosed5m.high);
-        const low5m = parseFloat(latestClosed5m.low);
-
-        // حساب قوة السيولة
-        let volumeScore = 0;
-        candles5.slice(0, 3).forEach(c => {
-            volumeScore += Math.abs(parseFloat(c.high) - parseFloat(c.low));
+            tr.innerHTML = `
+                <td style="font-weight: bold;">${item.name}</td>
+                <td>${item.price.toFixed(4)}</td>
+                <td style="font-size: 0.85rem; color: var(--text-secondary);">H: ${item.high.toFixed(4)}<br>L: ${item.low.toFixed(4)}</td>
+                <td>${signalBadge}<br><span style="font-size: 0.8rem; color: var(--text-secondary);">${item.signal !== 'WAIT' ? 'الدخول: ' + item.entry.toFixed(4) : '--'}</span></td>
+                <td style="color: var(--accent-red);">${item.signal !== 'WAIT' ? item.sl.toFixed(4) : '--'}</td>
+                <td style="color: var(--accent-green);">${item.signal !== 'WAIT' ? item.tp.toFixed(4) : '--'}</td>
+                <td style="font-weight: bold; ${item.score >= 7 ? 'color: var(--accent-green);' : 'color: var(--accent-yellow);'}">${item.score} / 10</td>
+                <td>${actionDecision}</td>
+            `;
+            tbody.appendChild(tr);
         });
-        let liquidityPower = Math.min(Math.max((volumeScore * 200).toFixed(1), 3.5), 9.5);
-
-        let signal = 'بانتظار الكسر';
-        let statusClass = 'status-wait';
-        let entryText = 'غير متوفر (بانتظار الكسر)';
-        let slText = 'غير متوفر (بانتظار الكسر)';
-        let tpText = 'غير متوفر (بانتظار الكسر)';
-
-        // الشرط الصارم جداً: يجب أن يكون *إغلاق* شمعة الـ 5 دقائق فعلياً أعلى أو أسفل النطاق
-        if (close5m > highRange) {
-            signal = 'شراء (اختراق صعودي مفعل)';
-            statusClass = 'status-buy';
-            let entry = close5m;
-            let sl = low5m; // قاع شمعة الكسر
-            let risk = entry - sl;
-            let tp = entry + (risk * 2);
-
-            entryText = entry.toFixed(4);
-            slText = sl.toFixed(4);
-            tpText = tp.toFixed(4);
-        } 
-        else if (close5m < lowRange) {
-            signal = 'بيع (اختراق هبوطي مفعل)';
-            statusClass = 'status-sell';
-            let entry = close5m;
-            let sl = high5m; // قمة شمعة الكسر
-            let risk = sl - entry;
-            let tp = entry - (risk * 2);
-
-            entryText = entry.toFixed(4);
-            slText = sl.toFixed(4);
-            tpText = tp.toFixed(4);
-        }
-
-        document.getElementById('selectedSymbolTitle').innerText = currentSymbol;
-        document.getElementById('currentPrice').innerText = currentPrice.toFixed(4);
-        
-        const badge = document.getElementById('signalStatus');
-        badge.className = `status-badge ${statusClass}`;
-        badge.innerText = signal;
-
-        document.getElementById('liquidityPower').innerText = `${liquidityPower} / 10`;
-        document.getElementById('orbRange').innerText = `High: ${highRange.toFixed(4)} | Low: ${lowRange.toFixed(4)}`;
-        
-        document.getElementById('entryPoint').innerText = entryText;
-        document.getElementById('stopLoss').innerText = slText;
-        document.getElementById('takeProfit').innerText = tpText;
-
-        const now = new Date();
-        const endSessionTime = new Date();
-        endSessionTime.setUTCHours(session.endHour, session.endMinute, 0, 0);
-        let diffMs = endSessionTime - now;
-        if (diffMs < 0) diffMs = 0;
-        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-        document.getElementById('activeSession').innerText = `${session.name} (ينتهي خلال: ${diffHrs} س و ${diffMins} د)`;
 
         document.getElementById('loaderText').style.display = 'none';
-        document.getElementById('contentBody').style.display = 'block';
+        document.getElementById('signalsTable').style.display = 'table';
     }
 
-    window.onload = initUI;
+    function manualRefresh() {
+        fetchAllData();
+    }
+
+    // الفحص التلقائي والتثبيت عند الأوقات المطلوبة (10:15 صباحاً و 4:45 عصراً)
+    setInterval(() => {
+        const t = getAmmanTime();
+        const h = t.getHours();
+        const m = t.getMinutes();
+        
+        // إذا كان الوقت الآن 10:15 أو 16:45 ولم يتم الجلب، يتم التحديث التلقائي والثبات
+        if ((h === 10 && m === 15) || (h === 16 && m === 45)) {
+            if (!lockedData) {
+                fetchAllData();
+            }
+        } else {
+            // إعادة تعيين قفل البيانات للسماح بالتحديث في الجلسة القادمة
+            if ((h === 10 && m === 16) || (h === 16 && m === 46)) {
+                // مر دقيقة على وقت التثبيت
+            }
+        }
+    }, 30000);
+
+    window.onload = () => {
+        fetchAllData();
+    };
 </script>
 
 </body>
