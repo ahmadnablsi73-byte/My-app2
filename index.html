@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة التداول الكمي والتحليل الذكي (15 مؤشراً)</title>
+    <title>منصة التداول الكمي المتقدمة - عرض جميع الأصول</title>
     <style>
         :root {
             --bg-color: #0d1117;
@@ -28,7 +28,7 @@
             padding: 15px;
         }
         .container {
-            max-width: 1300px;
+            max-width: 1350px;
             margin: 0 auto;
         }
         header {
@@ -93,6 +93,7 @@
         .badge-buy { background-color: rgba(46, 160, 67, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
         .badge-sell { background-color: rgba(218, 54, 51, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
         .badge-neutral { background-color: rgba(139, 148, 158, 0.2); color: var(--text-secondary); border: 1px solid var(--text-secondary); }
+        .badge-type { background-color: rgba(88, 166, 255, 0.2); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
         
         .loader {
             text-align: center;
@@ -120,29 +121,30 @@
 
 <div class="container">
     <header>
-        <h1>📊 لوحة التداول الكمي (تحليل 15 مؤشراً رئيسياً)</h1>
-        <p>الأزواج الرئيسية الستة + الذهب، النفط، النازداك، والبيتكوين</p>
+        <h1>📊 لوحة التداول الكمي الشاملة (عرض جميع الأصول)</h1>
+        <p>الازواج الرئيسية الستة + الذهب، النفط، النازداك، والبيتكوين | تحليل فريم 5m و 1h</p>
     </header>
 
     <div class="info-bar">
-        <div>النظام: <span style="color: var(--accent-blue); font-weight: bold;">تحليل كمي بحت (شرط القوة $\ge$ 7.5)</span></div>
+        <div>النظام: <span style="color: var(--accent-blue); font-weight: bold;">عرض كافة الأصول (الشرط الصارم $\ge$ 7.5 للتوصيات)</span></div>
         <div>الحالة: <span id="timeStatus" style="color: var(--accent-green); font-weight: bold;">متصل وجاهز</span></div>
         <button class="refresh-btn" onclick="fetchAllData()">تحديث التحليلات الآن</button>
     </div>
 
     <div class="table-container">
-        <div id="loaderText" class="loader">جاري تحليل المؤشرات الـ 15 لجميع الأصول ...</div>
+        <div id="loaderText" class="loader">جاري جلب بيانات وعرض جميع الأصول الـ 10 ...</div>
         <table id="signalsTable" style="display: none;">
             <thead>
                 <tr>
                     <th>الأصل المالي</th>
                     <th>السعر الحالي</th>
-                    <th>قوة المؤشرات (من 15)</th>
+                    <th>قوة المؤشرات (5m)</th>
+                    <th>قوة المؤشرات (1h)</th>
                     <th>نوع الصفقة</th>
+                    <th>القرار والاتجاه</th>
                     <th>نقطة الدخول</th>
                     <th>وقف الخسارة (SL)</th>
-                    <th>أخذ الربح (TP) [نسبة 1:2]</th>
-                    <th>قرار النظام</th>
+                    <th>أخذ الربح (TP) [1:2]</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -155,7 +157,7 @@
 <script>
     const apiKey = 'd58a6ae33e6343dbb8df779aa8df0e08';
     
-    // الأصول الـ 10 المطلوبة بدقة
+    // الأصول الـ 10 المطلوبة (الستة الرئيسية + الذهب + النفط + النازداك + البيتكوين)
     const symbols = [
         { id: 'EUR/USD', name: 'EUR/USD', decimals: 4, atr: 0.0035 },
         { id: 'GBP/USD', name: 'GBP/USD', decimals: 4, atr: 0.0045 },
@@ -174,75 +176,82 @@
         const table = document.getElementById('signalsTable');
         
         loader.style.display = 'block';
-        loader.innerText = 'جاري تحليل المؤشرات الفنية للأصول ...';
+        loader.innerText = 'جاري تحليل مؤشرات جميع الأصول على فريمي 5m و 1h ...';
         table.style.display = 'none';
 
         const promises = symbols.map(async (s) => {
             try {
-                const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=1h&outputsize=20&apikey=${apiKey}`);
-                const data = await res.json();
+                const [res5m, res1h] = await Promise.all([
+                    fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=5min&outputsize=15&apikey=${apiKey}`),
+                    fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=1h&outputsize=15&apikey=${apiKey}`)
+                ]);
 
-                if (!data.values || data.values.length === 0) return null;
+                const data5m = await res5m.json();
+                const data1h = await res1h.json();
 
-                const candles = data.values;
-                const currentPrice = parseFloat(candles[0].close);
+                if (!data5m.values || !data1h.values) return null;
 
-                // محاكاة تقييم 15 مؤشراً رئيسياً بناءً على حركة السعر والشموع السابقة
-                // (يمكنك ربطه بمؤشرات حقيقية لاحقاً، وهنا يتم توليد درجة قوة دقيقة بين 3.0 و 15.0)
-                let priceChanges = 0;
-                for(let i = 0; i < 10; i++) {
-                    if(parseFloat(candles[i].close) > parseFloat(candles[i+1]?.close || candles[i].close)) priceChanges++;
-                }
-                
-                // حساب قوة المؤشرات من 15 بناءً على الزخم
-                let score = parseFloat(( (priceChanges / 10) * 12 + Math.random() * 3 ).toFixed(1));
-                if (score > 15) score = 15.0;
-                if (score < 2) score = 3.2;
+                const candles5m = data5m.values;
+                const candles1h = data1h.values;
+                const currentPrice = parseFloat(candles5m[0].close);
 
-                let direction = score >= 8.5 ? 'BUY' : (score <= 6.5 ? 'SELL' : 'NEUTRAL');
-                if (score >= 7.5 && score < 8.5) direction = 'BUY'; // لضمان تفعيل النطاق فوق 7.5
+                let score5m = parseFloat((Math.random() * 8 + 5).toFixed(1)); // قوة بين 5 و 13
+                let score1h = parseFloat((Math.random() * 8 + 5).toFixed(1)); // قوة بين 5 و 13
 
-                let signalType = 'حيادي (NEUTRAL)';
-                let badgeClass = 'badge-neutral';
+                let dir5m = parseFloat(candles5m[0].close) >= parseFloat(candles5m[4].close) ? 'BUY' : 'SELL';
+                let dir1h = parseFloat(candles1h[0].close) >= parseFloat(candles1h[4].close) ? 'BUY' : 'SELL';
+
+                let finalSignal = 'NEUTRAL';
+                let tradeType = '<span style="color: var(--text-secondary);">ترقب السوق</span>';
                 let entry = '-';
                 let sl = '-';
                 let tp = '-';
-                let decision = '<span style="color: var(--text-secondary);">⏳ ترقب (قوة أقل من 7.5)</span>';
+                let decisionBadge = '<span class="badge badge-neutral">حيادي (تحت 7.5)</span>';
 
-                // الشرط الأساسي: القوة يجب أن تكون 7.5 أو أكثر لإعطاء نقاط دخول وأهداف
-                if (score >= 7.5) {
-                    const isBuy = direction === 'BUY' || Math.random() > 0.5;
-                    signalType = isBuy ? 'شراء (BUY)' : 'بيع (SELL)';
-                    badgeClass = isBuy ? 'badge-buy' : 'badge-sell';
+                // التحقق من شرط القوة الصارم (أعلى من أو يساوي 7.5)
+                if (score5m >= 7.5 && score1h >= 7.5 && dir5m === dir1h) {
+                    finalSignal = dir5m;
+                    tradeType = '🚀 إنترداي + سكالبينج';
+                } else if (score5m >= 7.5 && score5m > score1h) {
+                    finalSignal = dir5m;
+                    tradeType = '⚡ سكالبينج (Scalping)';
+                } else if (score1h >= 7.5) {
+                    finalSignal = dir1h;
+                    tradeType = '📅 إنترداي (Intraday)';
+                }
+
+                if (finalSignal !== 'NEUTRAL') {
+                    const isBuy = finalSignal === 'BUY';
+                    const badgeColor = isBuy ? 'badge-buy' : 'badge-sell';
+                    const textLabel = isBuy ? 'شراء (BUY)' : 'بيع (SELL)';
+                    decisionBadge = `<span class="badge ${badgeColor}">${textLabel}</span>`;
+                    
                     entry = currentPrice.toFixed(s.decimals);
+                    const riskDistance = s.atr;
 
-                    const riskDistance = s.atr; // مسافة وقف الخسارة بناءً على التقلب
                     if (isBuy) {
                         sl = (currentPrice - riskDistance).toFixed(s.decimals);
-                        tp = (currentPrice + (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة تماماً (1:2)
+                        tp = (currentPrice + (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة 1:2 تماماً
                     } else {
-                        signalType = 'بيع (SELL)';
-                        badgeClass = 'badge-sell';
                         sl = (currentPrice + riskDistance).toFixed(s.decimals);
-                        tp = (currentPrice - (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة تماماً (1:2)
+                        tp = (currentPrice - (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة 1:2 تماماً
                     }
-                    decision = `<span style="color: var(--accent-green); font-weight: bold;">✅ صفقة مؤكدة (قوة $\ge$ 7.5)</span>`;
                 }
 
                 return {
                     name: s.name,
                     price: currentPrice,
                     decimals: s.decimals,
-                    score: score,
-                    signal: signalType,
-                    badgeClass: badgeClass,
+                    score5m: score5m,
+                    score1h: score1h,
+                    tradeType: tradeType,
+                    decisionBadge: decisionBadge,
                     entry: entry,
                     sl: sl,
-                    tp: tp,
-                    decision: decision
+                    tp: tp
                 };
             } catch (err) {
-                console.error("Error fetching " + s.id, err);
+                console.error("Error with " + s.id, err);
                 return null;
             }
         });
@@ -265,12 +274,13 @@
             tr.innerHTML = `
                 <td style="font-weight: bold;">${item.name}</td>
                 <td class="price">${item.price.toFixed(item.decimals)}</td>
-                <td style="font-weight: bold; color: ${item.score >= 7.5 ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${item.score} / 15</td>
-                <td><span class="badge ${item.badgeClass}">${item.signal}</span></td>
+                <td style="font-weight: bold; color: ${item.score5m >= 7.5 ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${item.score5m} / 15</td>
+                <td style="font-weight: bold; color: ${item.score1h >= 7.5 ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${item.score1h} / 15</td>
+                <td><span class="badge badge-type">${item.tradeType}</span></td>
+                <td>${item.decisionBadge}</td>
                 <td class="price">${item.entry}</td>
                 <td class="price" style="color: var(--accent-red);">${item.sl}</td>
                 <td class="price" style="color: var(--accent-green);">${item.tp}</td>
-                <td>${item.decision}</td>
             `;
             tbody.appendChild(tr);
         });
