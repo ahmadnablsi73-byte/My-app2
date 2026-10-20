@@ -47,12 +47,15 @@
         .info-bar {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             padding: 12px 20px;
             border-radius: 8px;
             margin-bottom: 20px;
             font-size: 0.95rem;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .table-container {
             width: 100%;
@@ -89,7 +92,6 @@
         .badge-buy { background-color: rgba(46, 160, 67, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
         .badge-sell { background-color: rgba(218, 54, 51, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
         .badge-wait { background-color: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
-        .badge-skip { background-color: rgba(139, 148, 158, 0.2); color: var(--text-secondary); border: 1px solid var(--text-secondary); }
         
         .loader {
             text-align: center;
@@ -115,18 +117,19 @@
 
 <div class="container">
     <header>
-        <h1>📊 لوحة صفقات ORB الذكية (تحديث وتثبيت تلقائي)</h1>
-        <p>نطاق 15 دقيقة • إغلاق 5 دقائق حقيقي • فلتر زخم وسيولة • وقف خسارة علمي وهدف 1:2</p>
+        <h1>📊 لوحة صفقات ORB الذكية</h1>
+        <p>العملات الرئيسية + الذهب والبتكوين والنازداك والنفط • تحديث منضبط حسب مواعيد الجلسات</p>
     </header>
 
     <div class="info-bar">
-        <div>الجلسة المفعلة حالياً: <span id="currentSessionLabel" style="color: var(--accent-blue); font-weight: bold;">--</span></div>
-        <div>آخر تثبيت للأسعار: <span id="lastLockTime" style="color: var(--text-secondary);">--</span></div>
-        <button class="refresh-btn" onclick="manualRefresh()">تحديث يدوي الآن</button>
+        <div>الجلسة المفعلة: <span id="currentSessionLabel" style="color: var(--accent-blue); font-weight: bold;">--</span></div>
+        <div>حالة التوقيت: <span id="timeStatus" style="color: var(--accent-yellow); font-weight: bold;">--</span></div>
+        <div>آخر تثبيت: <span id="lastLockTime" style="color: var(--text-secondary);">--</span></div>
+        <button class="refresh-btn" onclick="manualRefresh()">فحص وتحديث</button>
     </div>
 
     <div class="table-container">
-        <div id="loaderText" class="loader">جاري فحص الأسواق وجلب بيانات Twelve Data وتحليل الزخم...</div>
+        <div id="loaderText" class="loader">جاري التحقق من التوقيت والأسواق...</div>
         <table id="signalsTable" style="display: none;">
             <thead>
                 <tr>
@@ -141,7 +144,7 @@
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <!-- يتم تعبئتها برمجياً -->
+                <!-- تعبئة تلقائية -->
             </tbody>
         </table>
     </div>
@@ -150,6 +153,7 @@
 <script>
     const apiKey = 'd58a6ae33e6343dbb8df779aa8df0e08';
     
+    // قائمة الأصول المطلوبة بدقة (العملات الست الرئيسية + الذهب والبتكوين والنازداك والنفط)
     const symbols = [
         { id: 'EUR/USD', name: 'EUR/USD' },
         { id: 'GBP/USD', name: 'GBP/USD' },
@@ -158,47 +162,63 @@
         { id: 'USD/CHF', name: 'USD/CHF' },
         { id: 'USD/CAD', name: 'USD/CAD' },
         { id: 'XAU/USD', name: 'الذهب (XAU)' },
+        { id: 'BTC/USD', name: 'البتكوين (BTC)' },
         { id: 'IXIC', name: 'النازداك (IXIC)' },
-        { id: 'WTI', name: 'النفط (WTI)' },
-        { id: 'BTC/USD', name: 'البيتكوين (BTC)' }
+        { id: 'WTI', name: 'النفط الخام (WTI)' }
     ];
 
     let lockedData = null;
-    let lastLockTimestamp = '';
+    let lastLockTimestamp = '--';
 
     function getAmmanTime() {
         const now = new Date();
-        // توقيت الأردن المحلي (UTC+3)
         const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        return new Date(utc + (3 * 3600000));
+        return new Date(utc + (3 * 3600000)); // توقيت عمان UTC+3
     }
 
-    function checkActiveSession() {
-        const ammanTime = getAmmanTime();
-        const hour = ammanTime.getHours();
-        const min = ammanTime.getMinutes();
-        const totalMins = hour * 60 + min;
+    function checkTradingWindow() {
+        const t = getAmmanTime();
+        const h = t.getHours();
+        const m = t.getMinutes();
+        const totalMins = h * 60 + m;
 
-        // لندن تفتح 10:00 (تتثبت 10:15) | نيويورك تفتح 16:30 (تتثبت 16:45)
-        if (totalMins >= 615 && totalMins < 1005) {
-            return { name: 'جلسة نيويورك (عصراً)', sessionKey: 'NY' };
+        // جلسة لندن تفتح 10:00. النطاق يكتمل ويصبح جاهزاً بعد 10:15 (615 دقيقة) إلى 16:00
+        // جلسة نيويورك تفتح 16:30. النطاق يكتمل ويصبح جاهزاً بعد 16:45 (1005 دقيقة) إلى 21:00
+
+        if (totalMins >= 600 && totalMins < 960) {
+            return { sessionName: 'جلسة لندن (صباحاً)', isReady: totalMins >= 615, msg: totalMins < 615 ? 'انتظار اكتمال شمعة الـ 15 دقيقة (قبل 10:15)' : 'جاهز للتداول' };
+        } else if (totalMins >= 990 && totalMins < 1300) {
+            return { sessionName: 'جلسة نيويورك (عصراً)', isReady: totalMins >= 1005, msg: totalMins < 1005 ? 'انتظار اكتمال شمعة الـ 15 دقيقة (قبل 16:45)' : 'جاهز للتداول' };
         } else {
-            return { name: 'جلسة لندن (صباحاً)', sessionKey: 'LONDON' };
+            return { sessionName: 'خارج أوقات الجلسات الرئيسية', isReady: false, msg: 'السوق في فترة انتقالية أو إغلاق' };
         }
     }
 
     async function fetchAllData() {
-        const sessionInfo = checkActiveSession();
-        document.getElementById('currentSessionLabel').innerText = sessionInfo.name;
-        
-        document.getElementById('loaderText').style.display = 'block';
-        document.getElementById('signalsTable').style.display = 'none';
+        const windowStatus = checkTradingWindow();
+        document.getElementById('currentSessionLabel').innerText = windowStatus.sessionName;
+        document.getElementById('timeStatus').innerText = windowStatus.msg;
+
+        const loader = document.getElementById('loaderText');
+        const table = document.getElementById('signalsTable');
+
+        // شرط صارم: إذا لم تنتهِ الـ 15 دقيقة الأولى من الافتتاح، لا تعرض صفقات وهمية
+        if (!windowStatus.isReady) {
+            loader.style.display = 'block';
+            loader.innerHTML = `⏳ ${windowStatus.msg}<br><span style="font-size:0.85rem; color: var(--text-secondary);">يرجى الانتظار حتى يبدأ وقت الحساب الرسمي لتفادي البيانات القديمة.</span>`;
+            table.style.display = 'none';
+            return;
+        }
+
+        loader.style.display = 'block';
+        loader.innerText = 'جاري جلب بيانات الجلسة الحالية وتحليل الزخم بدقة...';
+        table.style.display = 'none';
 
         let results = [];
 
         for (let s of symbols) {
             try {
-                const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=15min&outputsize=5&apikey=${apiKey}`);
+                const res15 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=15min&outputsize=3&apikey=${apiKey}`);
                 const data15 = await res15.json();
 
                 const res5 = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=5min&outputsize=5&apikey=${apiKey}`);
@@ -211,33 +231,29 @@
                 const candles15 = data15.values;
                 const candles5 = data5.values;
 
-                // شمعة النطاق (15 دقيقة الأولى)
+                // شمعة النطاق (أول 15 دقيقة من الجلسة الحالية)
                 const openingCandle = candles15[1] || candles15[0];
                 const highRange = parseFloat(openingCandle.high);
                 const lowRange = parseFloat(openingCandle.low);
                 const rangeSize = highRange - lowRange;
 
                 const currentPrice = parseFloat(candles5[0].close);
-                const closed5m = candles5[1]; // شمعة الـ 5 دقائق المغلقة تماماً
+                const closed5m = candles5[1]; // شمعة الـ 5 دقائق المغلقة تماساً
                 const close5m = parseFloat(closed5m.close);
-                const high5m = parseFloat(closed5m.high);
-                const low5m = parseFloat(closed5m.low);
 
-                // حساب مؤشر السيولة والزخم (بناءً على حركة الشموع وحجمها)
+                // قياس الزخم الفعلي
                 let momentumScore = 0;
                 candles5.slice(0, 3).forEach(c => {
                     momentumScore += Math.abs(parseFloat(c.high) - parseFloat(c.low));
                 });
-                let score = Math.min(Math.max((momentumScore * 250).toFixed(1), 4.0), 9.8);
+                let score = Math.min(Math.max((momentumScore * 200).toFixed(1), 4.0), 9.8);
 
-                let signalType = 'WAIT'; // بانتظار الكسر
+                let signalType = 'WAIT';
                 let entry = 0, sl = 0, tp = 0;
 
-                // شروط الإغلاق خارج النطاق
                 if (close5m > highRange) {
                     signalType = 'BUY';
                     entry = close5m;
-                    // SL: ثلث الرينج إذا كان كبير، أو نصف الرينج إذا كان صغير
                     let slDistance = rangeSize > (currentPrice * 0.002) ? (rangeSize / 3) : (rangeSize / 2);
                     sl = entry - slDistance;
                     tp = entry + (slDistance * 2);
@@ -280,7 +296,6 @@
 
         data.forEach(item => {
             let tr = document.createElement('tr');
-            
             let signalBadge = '';
             let actionDecision = '';
 
@@ -290,7 +305,7 @@
                     actionDecision = `<span style="color: var(--accent-green); font-weight: bold;">✅ صفقة ممتازة (الدخول مفعل)</span>`;
                 } else {
                     signalBadge = `<span class="badge badge-wait">شراء ضعيف</span>`;
-                    actionDecision = `<span style="color: var(--accent-yellow);">❌ تخطي الصفقة (زخم ضعيف أقل من 7)</span>`;
+                    actionDecision = `<span style="color: var(--accent-yellow);">❌ تخطي الصفقة (زخم أقل من 7)</span>`;
                 }
             } else if (item.signal === 'SELL') {
                 if (item.score >= 7.0) {
@@ -298,11 +313,11 @@
                     actionDecision = `<span style="color: var(--accent-red); font-weight: bold;">✅ صفقة ممتازة (الدخول مفعل)</span>`;
                 } else {
                     signalBadge = `<span class="badge badge-wait">بيع ضعيف</span>`;
-                    actionDecision = `<span style="color: var(--accent-yellow);">❌ تخطي الصفقة (زخم ضعيف أقل من 7)</span>`;
+                    actionDecision = `<span style="color: var(--accent-yellow);">❌ تخطي الصفقة (زخم أقل من 7)</span>`;
                 }
             } else {
                 signalBadge = `<span class="badge badge-wait">بانتظار الكسر</span>`;
-                actionDecision = `<span style="color: var(--text-secondary);">⏳ لم يكتمل الإغلاق الخارجي</span>`;
+                actionDecision = `<span style="color: var(--text-secondary);">⏳ بانتظار إغلاق 5 دقائق حقيقي</span>`;
             }
 
             tr.innerHTML = `
@@ -325,25 +340,6 @@
     function manualRefresh() {
         fetchAllData();
     }
-
-    // الفحص التلقائي والتثبيت عند الأوقات المطلوبة (10:15 صباحاً و 4:45 عصراً)
-    setInterval(() => {
-        const t = getAmmanTime();
-        const h = t.getHours();
-        const m = t.getMinutes();
-        
-        // إذا كان الوقت الآن 10:15 أو 16:45 ولم يتم الجلب، يتم التحديث التلقائي والثبات
-        if ((h === 10 && m === 15) || (h === 16 && m === 45)) {
-            if (!lockedData) {
-                fetchAllData();
-            }
-        } else {
-            // إعادة تعيين قفل البيانات للسماح بالتحديث في الجلسة القادمة
-            if ((h === 10 && m === 16) || (h === 16 && m === 46)) {
-                // مر دقيقة على وقت التثبيت
-            }
-        }
-    }, 30000);
 
     window.onload = () => {
         fetchAllData();
