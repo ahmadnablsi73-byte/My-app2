@@ -3,348 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة التداول الكمي المتقدمة (تثبيت الصفقات الذكي)</title>
+    <title>Falcon Trading | توصيات التداول الاحترافية</title>
+    <!-- خطوط جوجل العربية -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- مكتبة الأيقونات FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-color: #0d1117;
-            --card-bg: #161b22;
-            --border-color: #30363d;
-            --text-primary: #f0f6fc;
-            --text-secondary: #8b949e;
-            --accent-blue: #58a6ff;
-            --accent-green: #2ea043;
-            --accent-red: #da3633;
-            --accent-yellow: #d29922;
+            --primary-gold: #d4af37;
+            --light-gold: #f3e5ab;
+            --dark-bg: #0b131e;
+            --card-bg: #131f30;
+            --text-color: #ffffff;
+            --gray-text: #a0aec0;
+            --accent-green: #10b981;
         }
+
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
         }
+
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            padding: 15px;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
         }
-        .container {
-            max-width: 1350px;
-            margin: 0 auto;
-        }
+
+        /* الهيدر وشعار الموقع */
         header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        header h1 {
-            font-size: 1.4rem;
-            color: var(--text-primary);
-            margin-bottom: 5px;
-        }
-        header p {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-        .info-bar {
+            background: rgba(11, 19, 30, 0.95);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            flex-wrap: wrap;
-            gap: 10px;
+            padding: 15px 5%;
         }
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 10px;
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: right;
-            font-size: 0.85rem;
+
+        .logo-container img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 2px solid var(--primary-gold);
         }
-        th, td {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border-color);
-            white-space: nowrap;
+
+        .logo-container h1 {
+            font-size: 1.5rem;
+            color: var(--primary-gold);
+            font-weight: 900;
+            letter-spacing: 1px;
         }
-        th {
-            color: var(--text-secondary);
-            font-weight: 600;
+
+        .nav-btn {
+            background: linear-gradient(135deg, var(--primary-gold), #aa7c11);
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.3s;
         }
-        tr:hover {
-            background-color: rgba(255, 255, 255, 0.02);
+
+        .nav-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
         }
-        .badge {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            display: inline-block;
-        }
-        .badge-buy { background-color: rgba(46, 160, 67, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .badge-sell { background-color: rgba(218, 54, 51, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
-        .badge-neutral { background-color: rgba(139, 148, 158, 0.2); color: var(--text-secondary); border: 1px solid var(--text-secondary); }
-        .badge-type { background-color: rgba(88, 166, 255, 0.2); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
-        
-        .loader {
+
+        /* قسم الغلاف والترحيب */
+        .hero {
+            height: 90vh;
+            background: linear-gradient(rgba(11, 19, 30, 0.8), rgba(11, 19, 30, 0.95)), url('1000050790.jpg') center/cover no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            padding: 30px;
-            color: var(--text-secondary);
-            font-size: 1rem;
+            padding: 0 20px;
+            margin-top: 70px;
         }
-        .refresh-btn {
-            background-color: var(--accent-blue);
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.85rem;
+
+        .hero h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff, var(--light-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .refresh-btn:hover {
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--gray-text);
+            max-width: 700px;
+            margin-bottom: 30px;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, var(--primary-gold), #aa7c11);
+            color: #0b131e;
+            padding: 14px 35px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-telegram {
+            background: #0088cc;
+            color: #fff;
+            padding: 14px 35px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-main:hover, .btn-telegram:hover {
+            transform: translateY(-3px);
             opacity: 0.9;
         }
-        .price { font-family: monospace; font-size: 0.9rem; }
+
+        /* قسم المميزات */
+        .features {
+            padding: 80px 10%;
+            background: var(--dark-bg);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 50px;
+            color: var(--primary-gold);
+            font-weight: 800;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary-gold);
+            transform: translateY(-5px);
+        }
+
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--primary-gold);
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .feature-card p {
+            color: var(--gray-text);
+            font-size: 0.95rem;
+        }
+
+        /* باقات الاشتراك */
+        .pricing {
+            padding: 80px 10%;
+            background: #080e17;
+        }
+
+        .price-card {
+            background: var(--card-bg);
+            border: 2px solid var(--primary-gold);
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .price-card .badge {
+            position: absolute;
+            top: -15px;
+            right: 50%;
+            transform: translateX(50%);
+            background: var(--primary-gold);
+            color: #0b131e;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .price-card h3 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .price-card .price {
+            font-size: 3rem;
+            color: var(--primary-gold);
+            font-weight: 900;
+            margin: 20px 0;
+        }
+
+        .price-card ul {
+            list-style: none;
+            text-align: right;
+            margin: 30px 0;
+        }
+
+        .price-card ul li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--gray-text);
+        }
+
+        .price-card ul li i {
+            color: var(--accent-green);
+        }
+
+        /* الفوتر */
+        footer {
+            text-align: center;
+            padding: 30px;
+            background: #060a12;
+            color: var(--gray-text);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        @media(max-width: 768px) {
+            .hero h2 { font-size: 2.2rem; }
+            .hero p { font-size: 1rem; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
+    <!-- الهيدر -->
     <header>
-        <h1>📊 لوحة التداول الكمي المتقدمة (نظام تثبيت الصفقات)</h1>
-        <p>الازواج الرئيسية الستة + الذهب، النفط، النازداك، والبيتكوين | صفقات مثبتة حتى انعكاس المؤشرات</p>
+        <div class="logo-container">
+            <img src="1000050791.jpg" alt="Falcon Trading Logo">
+            <h1>FALCON TRADING</h1>
+        </div>
+        <a href="https://t.me/falcon8trade" target="_blank" class="nav-btn"><i class="fab fa-telegram"></i> القناة المجانية</a>
     </header>
 
-    <div class="info-bar">
-        <div>النظام: <span style="color: var(--accent-blue); font-weight: bold;">حفظ وثبات الصفقات (LocalStorage Active)</span></div>
-        <div>الحالة: <span id="timeStatus" style="color: var(--accent-green); font-weight: bold;">متصل وجاهز</span></div>
-        <button class="refresh-btn" onclick="fetchAllData()">تحديث التحليلات الآن</button>
-    </div>
+    <!-- الواجهة الرئيسية -->
+    <section class="hero">
+        <h2>التداول الذكي: توصيات مدفوعة بحرية مالية</h2>
+        <p>انضم إلى مجتمع النخبة في Falcon Trading وابدأ رحلتك نحو الاستقلال المالي بإدارة مخاطر صارمة وصفقات مدروسة بعناية.</p>
+        <div class="hero-btns">
+            <a href="https://wa.me/YOUR_PHONE_NUMBER?text=مرحباً، أود الاشتراك في التوصيات المدفوعة الخاصة" target="_blank" class="btn-main">
+                <i class="fab fa-whatsapp"></i> اشترك في التوصيات الخاصة (واتساب)
+            </a>
+            <a href="https://t.me/falcon8trade" target="_blank" class="btn-telegram">
+                <i class="fab fa-telegram-plane"></i> انضم لقناتنا المجانية على تلجرام
+            </a>
+        </div>
+    </section>
 
-    <div class="table-container">
-        <div id="loaderText" class="loader">جاري مزامنة وتحليل الأسواق مع الحفاظ على الصفقات النشطة ...</div>
-        <table id="signalsTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>الأصل المالي</th>
-                    <th>السعر الحالي</th>
-                    <th>قوة المؤشرات (5m)</th>
-                    <th>قوة المؤشرات (1h)</th>
-                    <th>نوع الصفقة</th>
-                    <th>القرار والاتجاه</th>
-                    <th>نقطة الدخول</th>
-                    <th>وقف الخسارة (SL)</th>
-                    <th>أخذ الربح (TP) [1:2]</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- تعبئة تلقائية عبر الجافاسكريبت -->
-            </tbody>
-        </table>
-    </div>
-</div>
+    <!-- قسم المميزات -->
+    <section class="features">
+        <h2 class="section-title">لماذا تختار Falcon Trading؟</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-chart-line"></i>
+                <h3>صفقات مركزة (1 إلى 3 يومياً)</h3>
+                <p>لا نمضي طوال اليوم في التداول؛ نختار لك أفضل الفرص بدقة عالية بعيداً عن التشتت وكثرة الصفقات العشوائية.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>هدف واحد ووقف خسارة واحد</h3>
+                <p>وضوح تام بدون تعزيز أو تغييرات مزعجة أثناء الصفقة؛ كل صفقة مرسومة بدقة لتوفير راحة البال.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-balance-scale"></i>
+                <h3>عائد استثماري ممتاز (1:1.5+)</h3>
+                <p>نضمن أن تكون نسبة الربح إلى المخاطرة (Risk-to-Reward) بنسبة هدف 1:1.5 على الأقل لتحقيق نمو مستدام لحسابك.</p>
+            </div>
+        </div>
+    </section>
 
-<script>
-    const apiKey = 'd58a6ae33e6343dbb8df779aa8df0e08';
-    
-    const symbols = [
-        { id: 'EUR/USD', name: 'EUR/USD', decimals: 4, atr: 0.0035 },
-        { id: 'GBP/USD', name: 'GBP/USD', decimals: 4, atr: 0.0045 },
-        { id: 'USD/JPY', name: 'USD/JPY', decimals: 2, atr: 0.65 },
-        { id: 'AUD/USD', name: 'AUD/USD', decimals: 4, atr: 0.0030 },
-        { id: 'USD/CHF', name: 'USD/CHF', decimals: 4, atr: 0.0032 },
-        { id: 'USD/CAD', name: 'USD/CAD', decimals: 4, atr: 0.0040 },
-        { id: 'XAU/USD', name: 'الذهب (XAUUSD)', decimals: 2, atr: 15.00 },
-        { id: 'BRENT', name: 'النفط (Brent)', decimals: 2, atr: 1.20 },
-        { id: 'IXIC', name: 'النازداك (NASDAQ)', decimals: 2, atr: 120.00 },
-        { id: 'BTC/USD', name: 'البيتكوين (BTCUSD)', decimals: 2, atr: 850.00 }
-    ];
+    <!-- قسم باقة الاشتراكات -->
+    <section class="pricing">
+        <h2 class="section-title">باقة التوصيات الخاصة عبر الواتساب</h2>
+        <div class="price-card">
+            <div class="badge">الباقة الاحترافية</div>
+            <h3>VIP WhatsApp</h3>
+            <div class="price">تواصل معنا</div>
+            <ul>
+                <li><i class="fas fa-check-circle"></i> من 1 إلى 3 توصيات يومية عالية الدقة</li>
+                <li><i class="fas fa-check-circle"></i> استلام التوصيات مباشرة عبر الواتساب</li>
+                <li><i class="fas fa-check-circle"></i> هدف واحد ووقف خسارة محدد بدقة</li>
+                <li><i class="fas fa-check-circle"></i> نسبة عائد للمخاطرة تبدأ من 1:1.5</li>
+                <li><i class="fas fa-check-circle"></i> متابعة مستمرة ودعم فني خاص</li>
+            </ul>
+            <a href="https://wa.me/YOUR_PHONE_NUMBER?text=مرحباً، أود معرفة تفاصيل الاشتراك في التوصيات المدفوعة الخاصة" target="_blank" class="btn-main" style="justify-content: center;">
+                <i class="fab fa-whatsapp"></i> اشترك الآن عبر الواتساب
+            </a>
+        </div>
+    </section>
 
-    async function fetchAllData() {
-        const loader = document.getElementById('loaderText');
-        const table = document.getElementById('signalsTable');
-        
-        loader.style.display = 'block';
-        loader.innerText = 'جاري تحديث الأسعار والمؤشرات للأسواق ...';
-        table.style.display = 'none';
-
-        // استرجاع الصفقات المثبتة مسبقاً من الذاكرة المحلية
-        let savedTrades = JSON.parse(localStorage.getItem('quant_locked_trades') || '{}');
-
-        const promises = symbols.map(async (s) => {
-            try {
-                const [res5m, res1h] = await Promise.all([
-                    fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=5min&outputsize=15&apikey=${apiKey}`),
-                    fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s.id)}&interval=1h&outputsize=15&apikey=${apiKey}`)
-                ]);
-
-                const data5m = await res5m.json();
-                const data1h = await res1h.json();
-
-                if (!data5m.values || !data1h.values) {
-                    // في حال فشل الاتصال المؤقت، نعرض البيانات المثبتة إن وجدت لضمان عدم اختفائها
-                    return savedTrades[s.id] || {
-                        name: s.name, price: 0, decimals: s.decimals, score5m: 5.0, score1h: 5.0,
-                        tradeType: 'ترقب السوق', decisionBadge: '<span class="badge badge-neutral">حيادي</span>',
-                        entry: '-', sl: '-', tp: '-'
-                    };
-                }
-
-                const candles5m = data5m.values;
-                const candles1h = data1h.values;
-                const currentPrice = parseFloat(candles5m[0].close);
-
-                let positiveMoves5m = 0;
-                for (let i = 0; i < 10; i++) {
-                    if (parseFloat(candles5m[i].close) > parseFloat(candles5m[i+1]?.close || candles5m[i].close)) positiveMoves5m++;
-                }
-                let score5m = parseFloat(( (positiveMoves5m / 10) * 10 + 4.5 ).toFixed(1));
-                if (score5m > 15) score5m = 15.0;
-
-                let positiveMoves1h = 0;
-                for (let i = 0; i < 10; i++) {
-                    if (parseFloat(candles1h[i].close) > parseFloat(candles1h[i+1]?.close || candles1h[i].close)) positiveMoves1h++;
-                }
-                let score1h = parseFloat(( (positiveMoves1h / 10) * 10 + 4.5 ).toFixed(1));
-                if (score1h > 15) score1h = 15.0;
-
-                let dir5m = parseFloat(candles5m[0].close) >= parseFloat(candles5m[candles5m.length - 1].close) ? 'BUY' : 'SELL';
-                let dir1h = parseFloat(candles1h[0].close) >= parseFloat(candles1h[candles1h.length - 1].close) ? 'BUY' : 'SELL';
-
-                let finalSignal = 'NEUTRAL';
-                let tradeType = '<span style="color: var(--text-secondary);">ترقب السوق</span>';
-                let entry = '-';
-                let sl = '-';
-                let tp = '-';
-                let decisionBadge = '<span class="badge badge-neutral">حيادي (تحت 7.5)</span>';
-
-                // تحقق من الشروط الجديدة
-                if (score5m >= 7.5 && score1h >= 7.5 && dir5m === dir1h) {
-                    finalSignal = dir5m;
-                    tradeType = '🚀 إنترداي + سكالبينج';
-                } else if (score5m >= 7.5 && score5m > score1h) {
-                    finalSignal = dir5m;
-                    tradeType = '⚡ سكالبينج (Scalping)';
-                } else if (score1h >= 7.5) {
-                    finalSignal = dir1h;
-                    tradeType = '📅 إنترداي (Intraday)';
-                }
-
-                let currentTradeData = null;
-
-                if (finalSignal !== 'NEUTRAL') {
-                    const isBuy = finalSignal === 'BUY';
-                    const badgeColor = isBuy ? 'badge-buy' : 'badge-sell';
-                    const textLabel = isBuy ? 'شراء (BUY)' : 'بيع (SELL)';
-                    decisionBadge = `<span class="badge ${badgeColor}">${textLabel}</span>`;
-                    
-                    entry = currentPrice.toFixed(s.decimals);
-                    const riskDistance = s.atr;
-
-                    if (isBuy) {
-                        sl = (currentPrice - riskDistance).toFixed(s.decimals);
-                        tp = (currentPrice + (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة 1:2
-                    } else {
-                        sl = (currentPrice + riskDistance).toFixed(s.decimals);
-                        tp = (currentPrice - (riskDistance * 2)).toFixed(s.decimals); // الهدف ضعف وقف الخسارة 1:2
-                    }
-
-                    currentTradeData = {
-                        name: s.name, price: currentPrice, decimals: s.decimals,
-                        score5m, score1h, tradeType, decisionBadge, entry, sl, tp, signal: finalSignal
-                    };
-                    
-                    // تثبيت الصفقة في الذاكرة المحلية
-                    savedTrades[s.id] = currentTradeData;
-                } else {
-                    // إذا تحولت الحالة إلى حيادية، هل نتخلص من الصفقة المثبتة أم نبقيها حتى يتغير الاتجاه؟
-                    // الشرط: "وثبت الصفقات حتى يتم ظهور مؤشرات تغيير من حالات الصفقه"
-                    if (savedTrades[s.id]) {
-                        // تحقق مما إذا انعكس الاتجاه تماماً (مثلاً كانت شراء وأصبحت المؤشرات تدعم البيع بقوة)
-                        const oldSignal = savedTrades[s.id].signal;
-                        if ((oldSignal === 'BUY' && dir5m === 'SELL' && score5m >= 7.5) || 
-                            (oldSignal === 'SELL' && dir5m === 'BUY' && score5m >= 7.5)) {
-                            // حدث انعكاس حقيقي -> نمسح الصفقة القديمة ونتركها حيادية
-                            delete savedTrades[s.id];
-                        } else {
-                            // لم يحدث انعكاس كامل، نبقي الصفقة المثبتة كما هي لحماية استمرارتها
-                            return savedTrades[s.id];
-                        }
-                    }
-                }
-
-                // حفظ التحديثات في التخزين المحلي
-                localStorage.setItem('quant_locked_trades', JSON.stringify(savedTrades));
-
-                return currentTradeData || {
-                    name: s.name,
-                    price: currentPrice,
-                    decimals: s.decimals,
-                    score5m: score5m,
-                    score1h: score1h,
-                    tradeType: tradeType,
-                    decisionBadge: decisionBadge,
-                    entry: entry,
-                    sl: sl,
-                    tp: tp
-                };
-            } catch (err) {
-                console.error("Error with " + s.id, err);
-                return savedTrades[s.id] || {
-                    name: s.name, price: 0, decimals: s.decimals, score5m: 5.0, score1h: 5.0,
-                    tradeType: 'ترقب السوق', decisionBadge: '<span class="badge badge-neutral">حيادي</span>',
-                    entry: '-', sl: '-', tp: '-'
-                };
-            }
-        });
-
-        const results = (await Promise.all(promises)).filter(item => item !== null);
-        renderTable(results);
-    }
-
-    function renderTable(data) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-
-        if (data.length === 0) {
-            document.getElementById('loaderText').innerText = 'تعذر جلب البيانات، يرجى المحاولة لاحقاً.';
-            return;
-        }
-
-        data.forEach(item => {
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="font-weight: bold;">${item.name}</td>
-                <td class="price">${typeof item.price === 'number' ? item.price.toFixed(item.decimals) : item.price}</td>
-                <td style="font-weight: bold; color: ${item.score5m >= 7.5 ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${item.score5m} / 15</td>
-                <td style="font-weight: bold; color: ${item.score1h >= 7.5 ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${item.score1h} / 15</td>
-                <td><span class="badge badge-type">${item.tradeType}</span></td>
-                <td>${item.decisionBadge}</td>
-                <td class="price">${item.entry}</td>
-                <td class="price" style="color: var(--accent-red);">${item.sl}</td>
-                <td class="price" style="color: var(--accent-green);">${item.tp}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        document.getElementById('loaderText').style.display = 'none';
-        document.getElementById('signalsTable').style.display = 'table';
-    }
-
-    window.onload = () => {
-        fetchAllData();
-    };
-</script>
+    <!-- الفوتر -->
+    <footer>
+        <p>جميع الحقوق محفوظة &copy; 2026 Falcon Trading | التداول يحمل مخاطر عالية، تداول بحذر.</p>
+    </footer>
 
 </body>
 </html>
