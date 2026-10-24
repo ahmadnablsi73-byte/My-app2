@@ -273,4 +273,182 @@
             padding: 45px 35px;
             text-align: center;
             position: relative;
-            
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .price-card .badge {
+            position: absolute;
+            top: -16px;
+            right: 50%;
+            transform: translateX(50%);
+            background: var(--primary-gold);
+            color: #0b131e;
+            padding: 6px 22px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        .price-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .price-card .trial-offer {
+            color: var(--accent-green);
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .price-card .price {
+            font-size: 2.5rem;
+            color: var(--primary-gold);
+            font-weight: 900;
+            margin: 15px 0;
+        }
+
+        .price-card ul {
+            list-style: none;
+            text-align: right;
+            margin: 25px 0 35px;
+        }
+
+        .price-card ul li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--gray-text);
+            font-size: 1rem;
+        }
+
+        .price-card ul li i {
+            color: var(--accent-green);
+            font-size: 1.1rem;
+        }
+
+        .price-card ul li.free-trial-item {
+            color: #fff;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-right: 4px solid var(--accent-green);
+        }
+
+        /* الفوتر */
+        footer {
+            text-align: center;
+            padding: 30px;
+            background: #060a12;
+            color: var(--gray-text);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        @media(max-width: 768px) {
+            .hero h2 { font-size: 2rem; }
+            .hero p { font-size: 1rem; }
+            .logo-container h1 { font-size: 1.1rem; }
+            .hero-logo { width: 190px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الهيدر -->
+    <header>
+        <a href="#" class="logo-container">
+            <img src="1000050791.jpg" alt="Falcon Trading Logo">
+            <h1>FALCON TRADING</h1>
+        </a>
+        <a href="https://t.me/falcon8trade" target="_blank" class="nav-btn">
+            <i class="fab fa-telegram"></i> القناة المجانية
+        </a>
+    </header>
+
+    <!-- الواجهة الرئيسية -->
+    <section class="hero">
+        <!-- عرض الشعار بشكل بارز في الواجهة -->
+        <img src="1000050791.jpg" alt="Falcon Trading" class="hero-logo">
+        
+        <!-- شارة التجربة المجانية -->
+        <div class="trial-badge">
+            <i class="fas fa-gift"></i> احصل على تجربة مجانية لمدة 3 أيام في قناة VIP!
+        </div>
+
+        <h2>التداول الذكي: توصيات مدفوعة بحرية مالية</h2>
+        <p>انضم إلى مجتمع النخبة في Falcon Trading وابدأ رحلتك نحو الاستقلال المالي بإدارة مخاطر صارمة وصفقات مدروسة بعناية.</p>
+        
+        <div class="hero-btns">
+            <!-- رابط الواتساب باستخدام اسم المستخدم -->
+            <a href="https://wa.me/falcon8trade?text=مرحباً، أود تفعيل التجربة المجانية لمدة 3 أيام في التوصيات الخاصة" target="_blank" class="btn-main">
+                <i class="fab fa-whatsapp"></i> ابدأ تجربتك المجانية (3 أيام)
+            </a>
+            <a href="https://t.me/falcon8trade" target="_blank" class="btn-telegram">
+                <i class="fab fa-telegram-plane"></i> انضم لقناتنا المجانية على تلجرام
+            </a>
+        </div>
+    </section>
+
+    <!-- قسم المميزات -->
+    <section class="features">
+        <h2 class="section-title">لماذا تختار Falcon Trading؟</h2>
+        <div class="features-grid">
+            <!-- ميزة التجربة المجانية -->
+            <div class="feature-card highlight-trial">
+                <i class="fas fa-unlock-alt"></i>
+                <h3>تجربة مجانية لمدة 3 أيام</h3>
+                <p>جرب جودة توصياتنا الخاصة ومستوى الدقة بنفسك لمدة 3 أيام كاملة مجاناً قبل اتخاذ قرار الاشتراك.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-chart-line"></i>
+                <h3>صفقات مركزة (1 إلى 3 يومياً)</h3>
+                <p>لا نمضي طوال اليوم في التداول؛ نختار لك أفضل الفرص بدقة عالية بعيداً عن التشتت وكثرة الصفقات العشوائية.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>هدف واحد ووقف خسارة واحد</h3>
+                <p>وضوح تام بدون تعزيز أو تغييرات مزعجة أثناء الصفقة؛ كل صفقة مرسومة بدقة لتوفير راحة البال.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-balance-scale"></i>
+                <h3>عائد استثماري ممتاز (1:1.5+)</h3>
+                <p>نضمن أن تكون نسبة الربح إلى المخاطرة (Risk-to-Reward) بنسبة هدف 1:1.5 على الأقل لتحقيق نمو مستدام لحسابك.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- قسم باقة الاشتراكات -->
+    <section class="pricing">
+        <h2 class="section-title">باقة التوصيات الخاصة عبر الواتساب</h2>
+        <div class="price-card">
+            <div class="badge">الباقة الاحترافية + تجربة مجانية</div>
+            <h3>VIP WhatsApp</h3>
+            <span class="trial-offer"><i class="fas fa-star"></i> شاملة 3 أيام تجربة مجانية بالكامل</span>
+            <div class="price">تواصل معنا</div>
+            <ul>
+                <li class="free-trial-item"><i class="fas fa-gift"></i> 3 أيام تجربة مجانية لاختبار قوة التوصيات</li>
+                <li><i class="fas fa-check-circle"></i> من 1 إلى 3 توصيات يومية عالية الدقة</li>
+                <li><i class="fas fa-check-circle"></i> استلام التوصيات مباشرة عبر الواتساب</li>
+                <li><i class="fas fa-check-circle"></i> هدف واحد ووقف خسارة محدد بدقة</li>
+                <li><i class="fas fa-check-circle"></i> نسبة عائد للمخاطرة تبدأ من 1:1.5</li>
+                <li><i class="fas fa-check-circle"></i> متابعة مستمرة ودعم فني خاص</li>
+            </ul>
+            <!-- رابط الواتساب باستخدام اسم المستخدم -->
+            <a href="https://wa.me/falcon8trade?text=مرحباً، أود الحصول على تجربة 3 أيام مجانية ومعرفة تفاصيل اشتراك VIP" target="_blank" class="btn-main" style="justify-content: center;">
+                <i class="fab fa-whatsapp"></i> اطلب تجربتك المجانية الآن عبر الواتساب
+            </a>
+        </div>
+    </section>
+
+    <!-- الفوتر -->
+    <footer>
+        <p>جميع الحقوق محفوظة &copy; 2026 Falcon Trading | التداول يحمل مخاطر عالية، تداول بحذر.</p>
+    </footer>
+
+</body>
+</html>
