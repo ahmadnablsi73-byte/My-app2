@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Falcon Trading | توصيات التداول الاحترافية</title>
+    <!-- أيقونة المتصفح (Favicon) باستخدام الشعار -->
+    <link rel="icon" type="image/jpeg" href="1000050791.jpg">
     <!-- خطوط جوجل العربية -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <!-- مكتبة الأيقونات FontAwesome -->
@@ -44,25 +46,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 5%;
+            padding: 12px 5%;
+            backdrop-filter: blur(10px);
         }
 
         .logo-container {
             display: flex;
             align-items: center;
             gap: 15px;
+            text-decoration: none;
         }
 
         .logo-container img {
-            width: 50px;
-            height: 50px;
-            object-fit: contain;
-            border-radius: 50%;
-            border: 2px solid var(--primary-gold);
+            height: 55px;
+            width: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         }
 
         .logo-container h1 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: var(--primary-gold);
             font-weight: 900;
             letter-spacing: 1px;
@@ -76,6 +80,9 @@
             font-weight: 700;
             text-decoration: none;
             transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .nav-btn:hover {
@@ -85,21 +92,59 @@
 
         /* قسم الغلاف والترحيب */
         .hero {
-            height: 90vh;
-            background: linear-gradient(rgba(11, 19, 30, 0.8), rgba(11, 19, 30, 0.95)), url('1000050790.jpg') center/cover no-repeat;
+            min-height: 92vh;
+            background: radial-gradient(circle at center, rgba(19, 31, 48, 0.85) 0%, rgba(11, 19, 30, 0.98) 100%), url('1000050791.jpg') center/cover no-repeat;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 0 20px;
-            margin-top: 70px;
+            padding: 60px 20px;
+            margin-top: 75px;
+        }
+
+        .hero-logo {
+            width: 240px;
+            max-width: 80%;
+            border-radius: 16px;
+            border: 2px solid var(--primary-gold);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+            margin-bottom: 25px;
+            transition: 0.3s;
+        }
+
+        .hero-logo:hover {
+            transform: scale(1.03);
+            box-shadow: 0 12px 35px rgba(212, 175, 55, 0.35);
+        }
+
+        /* شارة التجربة المجانية في الواجهة */
+        .trial-badge {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--accent-green);
+            color: #34d399;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
         }
 
         .hero h2 {
-            font-size: 3rem;
+            font-size: 2.8rem;
             font-weight: 900;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             background: linear-gradient(135deg, #fff, var(--light-gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -109,7 +154,7 @@
             font-size: 1.2rem;
             color: var(--gray-text);
             max-width: 700px;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
 
         .hero-btns {
@@ -149,12 +194,13 @@
 
         .btn-main:hover, .btn-telegram:hover {
             transform: translateY(-3px);
-            opacity: 0.9;
+            opacity: 0.95;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
 
         /* قسم المميزات */
         .features {
-            padding: 80px 10%;
+            padding: 80px 8%;
             background: var(--dark-bg);
         }
 
@@ -168,14 +214,14 @@
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
         }
 
         .feature-card {
             background: var(--card-bg);
             border: 1px solid rgba(212, 175, 55, 0.2);
-            padding: 30px;
+            padding: 30px 25px;
             border-radius: 12px;
             text-align: center;
             transition: 0.3s;
@@ -186,10 +232,19 @@
             transform: translateY(-5px);
         }
 
+        .feature-card.highlight-trial {
+            border: 1.5px solid var(--accent-green);
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, var(--card-bg) 100%);
+        }
+
         .feature-card i {
             font-size: 2.5rem;
             color: var(--primary-gold);
             margin-bottom: 20px;
+        }
+
+        .feature-card.highlight-trial i {
+            color: var(--accent-green);
         }
 
         .feature-card h3 {
@@ -212,145 +267,10 @@
         .price-card {
             background: var(--card-bg);
             border: 2px solid var(--primary-gold);
-            max-width: 500px;
+            max-width: 520px;
             margin: 0 auto;
             border-radius: 16px;
-            padding: 40px;
+            padding: 45px 35px;
             text-align: center;
             position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .price-card .badge {
-            position: absolute;
-            top: -15px;
-            right: 50%;
-            transform: translateX(50%);
-            background: var(--primary-gold);
-            color: #0b131e;
-            padding: 5px 20px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-
-        .price-card h3 {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            color: #fff;
-        }
-
-        .price-card .price {
-            font-size: 3rem;
-            color: var(--primary-gold);
-            font-weight: 900;
-            margin: 20px 0;
-        }
-
-        .price-card ul {
-            list-style: none;
-            text-align: right;
-            margin: 30px 0;
-        }
-
-        .price-card ul li {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--gray-text);
-        }
-
-        .price-card ul li i {
-            color: var(--accent-green);
-        }
-
-        /* الفوتر */
-        footer {
-            text-align: center;
-            padding: 30px;
-            background: #060a12;
-            color: var(--gray-text);
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-
-        @media(max-width: 768px) {
-            .hero h2 { font-size: 2.2rem; }
-            .hero p { font-size: 1rem; }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- الهيدر -->
-    <header>
-        <div class="logo-container">
-            <img src="1000050791.jpg" alt="Falcon Trading Logo">
-            <h1>FALCON TRADING</h1>
-        </div>
-        <a href="https://t.me/falcon8trade" target="_blank" class="nav-btn"><i class="fab fa-telegram"></i> القناة المجانية</a>
-    </header>
-
-    <!-- الواجهة الرئيسية -->
-    <section class="hero">
-        <h2>التداول الذكي: توصيات مدفوعة بحرية مالية</h2>
-        <p>انضم إلى مجتمع النخبة في Falcon Trading وابدأ رحلتك نحو الاستقلال المالي بإدارة مخاطر صارمة وصفقات مدروسة بعناية.</p>
-        <div class="hero-btns">
-            <a href="https://wa.me/YOUR_PHONE_NUMBER?text=مرحباً، أود الاشتراك في التوصيات المدفوعة الخاصة" target="_blank" class="btn-main">
-                <i class="fab fa-whatsapp"></i> اشترك في التوصيات الخاصة (واتساب)
-            </a>
-            <a href="https://t.me/falcon8trade" target="_blank" class="btn-telegram">
-                <i class="fab fa-telegram-plane"></i> انضم لقناتنا المجانية على تلجرام
-            </a>
-        </div>
-    </section>
-
-    <!-- قسم المميزات -->
-    <section class="features">
-        <h2 class="section-title">لماذا تختار Falcon Trading؟</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <i class="fas fa-chart-line"></i>
-                <h3>صفقات مركزة (1 إلى 3 يومياً)</h3>
-                <p>لا نمضي طوال اليوم في التداول؛ نختار لك أفضل الفرص بدقة عالية بعيداً عن التشتت وكثرة الصفقات العشوائية.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-shield-alt"></i>
-                <h3>هدف واحد ووقف خسارة واحد</h3>
-                <p>وضوح تام بدون تعزيز أو تغييرات مزعجة أثناء الصفقة؛ كل صفقة مرسومة بدقة لتوفير راحة البال.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-balance-scale"></i>
-                <h3>عائد استثماري ممتاز (1:1.5+)</h3>
-                <p>نضمن أن تكون نسبة الربح إلى المخاطرة (Risk-to-Reward) بنسبة هدف 1:1.5 على الأقل لتحقيق نمو مستدام لحسابك.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- قسم باقة الاشتراكات -->
-    <section class="pricing">
-        <h2 class="section-title">باقة التوصيات الخاصة عبر الواتساب</h2>
-        <div class="price-card">
-            <div class="badge">الباقة الاحترافية</div>
-            <h3>VIP WhatsApp</h3>
-            <div class="price">تواصل معنا</div>
-            <ul>
-                <li><i class="fas fa-check-circle"></i> من 1 إلى 3 توصيات يومية عالية الدقة</li>
-                <li><i class="fas fa-check-circle"></i> استلام التوصيات مباشرة عبر الواتساب</li>
-                <li><i class="fas fa-check-circle"></i> هدف واحد ووقف خسارة محدد بدقة</li>
-                <li><i class="fas fa-check-circle"></i> نسبة عائد للمخاطرة تبدأ من 1:1.5</li>
-                <li><i class="fas fa-check-circle"></i> متابعة مستمرة ودعم فني خاص</li>
-            </ul>
-            <a href="https://wa.me/YOUR_PHONE_NUMBER?text=مرحباً، أود معرفة تفاصيل الاشتراك في التوصيات المدفوعة الخاصة" target="_blank" class="btn-main" style="justify-content: center;">
-                <i class="fab fa-whatsapp"></i> اشترك الآن عبر الواتساب
-            </a>
-        </div>
-    </section>
-
-    <!-- الفوتر -->
-    <footer>
-        <p>جميع الحقوق محفوظة &copy; 2026 Falcon Trading | التداول يحمل مخاطر عالية، تداول بحذر.</p>
-    </footer>
-
-</body>
-</html>
+            
